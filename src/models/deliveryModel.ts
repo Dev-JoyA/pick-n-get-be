@@ -5,21 +5,21 @@ const PickUpDetails = sequelize.define(
   'PickUpDetails',
   {
     id: {
-        type: DataTypes.NUMBER,
+        type: DataTypes.INTEGER,
         autoIncrement: true,
         allowNull: false,
         primaryKey: true
     }, 
     riderId : {
-        type: DataTypes.NUMBER,
+        type: DataTypes.INTEGER,
         allowNull: false
     },
     userId: {
-      type: DataTypes.NUMBER,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     itemId: {
-      type: DataTypes.NUMBER,
+      type: DataTypes.INTEGER,
       allowNull: false
     },
     customerName : {
@@ -27,8 +27,8 @@ const PickUpDetails = sequelize.define(
         allowNull: false
     },
     pickUpAddress: {
-        type: DataTypes.STRING,
-        allowNull: false
+      type: DataTypes.STRING,
+      allowNull: false,
     },
     deliveryAddress: {
         type: DataTypes.STRING,
@@ -41,13 +41,14 @@ const PickUpDetails = sequelize.define(
         type: DataTypes.STRING,
         allowNull: false
     },
-    userPhoneNumber : {
+    userPhoneNumber: {
         type: DataTypes.STRING,
         allowNull: false
     },
     pickUpStatus : {
         type : DataTypes.ENUM,
-        values: ['Pending', 'InTransit', 'PickedUp', 'Delivered', 'Cancelled']
+        values: ['Pending', 'InTransit', 'PickedUp', 'Delivered', 'Cancelled'],
+        defaultValue: 'Pending'
     },
     description : {
         type: DataTypes.STRING,
@@ -57,16 +58,8 @@ const PickUpDetails = sequelize.define(
         type: DataTypes.DATE,
         allowNull: false
     },
-    pickUpTime : {
-        type: DataTypes.TIME,
-        allowNull: false
-    },
     deliveryDate : {
         type: DataTypes.DATE,
-        allowNull: true
-    },
-    deliveryTime : {
-        type: DataTypes.TIME,
         allowNull: true
     },
     image : {
@@ -75,13 +68,11 @@ const PickUpDetails = sequelize.define(
     }
   },
   {
-    modelName : "PickUpDetails",
     tableName: "pick_up_details",
-    timestamps: true
-  },
+    timestamps: true,
+  }
 );
 
-
-console.log(PickUpDetails === sequelize.models.PickUpDetails);
+export default PickUpDetails;
 
 

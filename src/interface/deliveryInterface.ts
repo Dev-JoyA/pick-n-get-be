@@ -2,7 +2,7 @@ export type PickUpStatus = 'Pending'| 'InTransit' | 'PickedUp'| 'Delivered'| 'Ca
 
 export type VehicleType = "Bike" | 'Car' | 'Trock' | 'Van'
 
-export type RiderStatus =  'Off-line'| 'Available' | "On-Trip"
+export type RiderStatus =  'Available'| 'Off-line' | "On-Trip"
 
 export interface IRiderDetails {
     id : number;
@@ -12,6 +12,7 @@ export interface IRiderDetails {
     riderStatus : RiderStatus;
     vehicleType : VehicleType;
     image : string;
+    country: string;
 }
 
 

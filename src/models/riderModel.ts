@@ -33,7 +33,11 @@ const RiderDetails = sequelize.define(
         image : {
             type: DataTypes.STRING,
             allowNull: false
-        } 
+        },
+        country : {
+            type: DataTypes.STRING,
+            allowNull: false
+        }
     },
     {
         tableName: "rider_details",

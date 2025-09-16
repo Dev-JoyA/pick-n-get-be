@@ -1,13 +1,18 @@
-import {client, sequelize} from  "../config/db"
+import {sequelize} from  "../config/db"
 import { DataTypes } from 'sequelize'; 
 
 const RiderDetails = sequelize.define(
   'RiderDetails',
     {
+        firebaseUid:{
+            type: DataTypes.INTEGER,
+            allowNull: true,
+            unique: true,
+        },
         riderId:{
             type : DataTypes.INTEGER,
             allowNull : false,
-            primaryKey : true
+            unique: true
         },
         riderName:{
             type : DataTypes.STRING,
@@ -15,11 +20,13 @@ const RiderDetails = sequelize.define(
         },
         phoneNumber : {
             type : DataTypes.STRING,
-            allowNull : false
+            allowNull : false,
+            unique: true
         },
         vehicleNumber : {
             type : DataTypes.STRING,
             allowNull : false,
+            unique: true
         },
         riderStatus : {
             type : DataTypes.ENUM,
@@ -43,7 +50,6 @@ const RiderDetails = sequelize.define(
         tableName: "rider_details",
         timestamps: true,
     }
-
 )
 
 export default RiderDetails;

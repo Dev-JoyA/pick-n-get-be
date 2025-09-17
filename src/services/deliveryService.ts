@@ -44,7 +44,7 @@ contract.on("RiderApproved", async (riderDetails : IRiderDetails) => {
     }
 });
 
-const selectRide = async(type: string , country: string, pickupAddress: string) => {
+export const selectRide = async(type: string , country: string, pickupAddress: string) => {
     const riders = await RiderDetails.findAll({ where :{ 
         [Op.and] : [
             {vehicleType : {[Op.like] : `%${type}%`}}, 
@@ -122,7 +122,7 @@ const selectRide = async(type: string , country: string, pickupAddress: string) 
     
 };
 
-const pickRider = async(
+export const pickRider = async(
     type: string,
     country: string,
     pickupAddress: string,
@@ -197,13 +197,18 @@ const pickRider = async(
             userId : details.userId,
             itemId : details.itemId,
             pickUpAddress: details.pickUpAddress,
+            riderStatus : riderData.riderStatus,
+            riderNumber : riderData.phoneNumber,
+            riderName : riderData.name,
+            customerName : details.customerName,
+            customerNumber : details.userPhoneNumber
         }
     };
     }
   }); 
 }
 
-const validateRide = async(uid: number, validate: string, id: number) => {
+export const validateRide = async(uid: number, validate: string, id: number) => {
     const firebaseUid = uid;
 
     const findRider = await RiderDetails.findOne({
@@ -216,22 +221,78 @@ const validateRide = async(uid: number, validate: string, id: number) => {
 
     const riderId = findRider.get("riderId") as number;
 
+    let riderStatus: string;
+    let pickupStatus: string | null = null;
+
     if (validate === "cancel") {
+        riderStatus = "Available"
         await RiderDetails.update(
-        { riderStatus: "Available" },
+        { riderStatus},
         { where: { riderId } }
         );
-    } else if (validate === "off-line") {
+    } else if (validate === "offline") {
+        riderStatus = "off-line"
         await RiderDetails.update(
-        { riderStatus: "off-line" },
+        { riderStatus},
         { where: { riderId } }
         );
-    } else {
+    }else if(validate == "available"){
+        riderStatus = "on-trip"
+        pickupStatus = "in-transit";
         await PickUpDetails.update(
-        { pickUpStatus: "in-transit" },
-        { where: { pickUpId: id, riderId } } 
+            { pickUpStatus: pickupStatus },
+            { where: { pickUpId: id, riderId } }
         );
+    }else {
+        throw new Error("Invalid validation option");   
+    }
+
+    return {
+        status : "success",
+        data : {
+            firebaseId : firebaseUid,
+            riderId ,
+            pickupStatus, 
+            riderStatus
+        }
     }
 };
+
+export const updatePickUpItem  = async (uid: number, itemStatus: string, id: number) => {
+    const firebaseUid = uid;
+
+    const findRider = await RiderDetails.findOne({
+        where: { firebaseUid }  
+    });
+
+    if (!findRider) {
+        throw new Error("Rider not found or not authorized");
+    }
+
+    const riderId = findRider.get("riderId") as number;
+
+    const item: any = await PickUpDetails.findOne({where : {id}})
+
+    if(item.pickUpStatus == "Delivered"){
+        return {status : "item Already delivered"}
+    }
+
+    if(item.pickUpStatus == "Cancelled"){
+        return {status : "Item Already Cancelled"}
+    }
+
+    if(item.pickUpStatus == itemStatus){
+        return {status : `item stattus is already: ${itemStatus}`}
+    } else {
+        item.pickUpStatus = itemStatus;
+        await PickUpDetails.update(
+            { pickUpStatus: itemStatus },
+            { where: { id: id, riderId } }
+        )
+        return {status : `item status have been updated : ${itemStatus}`}
+    }
+    
+}
+
 
 

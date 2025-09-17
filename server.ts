@@ -3,7 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import {sequelize, client}  from "./src/config/db.ts"
+import {sequelize}  from "./src/config/db.ts"
+import route from "./src/routes/deliveryRoute.ts"
 
 dotenv.config();
 
@@ -14,20 +15,13 @@ try {
   console.error('Unable to connect to the database:', error);
 }
 
-client.on('error', err => console.log('Redis Client Error', err));
-
-await client.connect();
-console.log("redis sucessfully connected", client);
-
 const app = express();
 app.use(cors());
 app.use(helmet());
 app.use(morgan('dev'));
 app.use(express.json());
 
-app.get("/", (req : Request, res : Response) => {
-    res.json({message : "It works"});
-})
+app.use("/api/v1", route)
 
 
 

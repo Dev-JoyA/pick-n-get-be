@@ -23,14 +23,11 @@ export interface IPickUpDetails {
     itemId: number;
     customerName: string;
     pickUpAddress: string;
-    deliveryAddress?: string;
     riderName: string;
     riderPhoneNumber: string;
     userPhoneNumber: string;
     pickUpStatus: PickUpStatus;
     description?: string;
-    pickUpDate: Date;
-    deliveryDate?: Date;
     image?: string;
     createdAt?: Date; 
     updatedAt?: Date; 

@@ -30,9 +30,6 @@ const PickUpDetails = sequelize.define(
       type: DataTypes.STRING,
       allowNull: false,
     },
-    deliveryAddress: {
-        type: DataTypes.STRING,
-    },
     riderName: {
         type: DataTypes.STRING,
         allowNull: false
@@ -52,14 +49,6 @@ const PickUpDetails = sequelize.define(
     },
     description : {
         type: DataTypes.STRING,
-        allowNull: true
-    },
-    pickUpDate : {
-        type: DataTypes.DATE,
-        allowNull: false
-    },
-    deliveryDate : {
-        type: DataTypes.DATE,
         allowNull: true
     },
     image : {

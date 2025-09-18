@@ -178,14 +178,11 @@ export const pickRider = async(
             itemId : details.itemId,
             customerName : details.customerName,
             pickUpAddress : details.pickUpAddress,
-            deliveryAddress : details.deliveryAddress,
             riderName : riderData.name,
             riderPhoneNumber : riderData.phoneNumber,
             userPhoneNumber : details.userPhoneNumber,
             pickUpStatus : 'Pending',
             description : details.description,
-            pickUpDate : details.pickUpDate,
-            deliveryDate : details.deliveryDate,
             image : details.image
         }, { transaction: t });
 

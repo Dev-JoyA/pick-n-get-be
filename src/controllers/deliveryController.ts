@@ -1,5 +1,5 @@
 import {Request, Response} from "express"
-import { pickRider, validateRide, updatePickUpItem} from "../services/deliveryService"
+import { pickRider, validateRide, updatePickUpItem} from "../services/deliveryService.ts"
 import { IPickUpDetails } from "../interface/deliveryInterface"
 
 export const pickRide = async (req: Request, res: Response) => {

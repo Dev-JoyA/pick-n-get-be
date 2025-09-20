@@ -1,4 +1,4 @@
-import {sequelize} from  "../config/db"
+import {sequelize} from  "../config/db.ts"
 import { DataTypes } from 'sequelize'; 
 
 const PickUpDetails = sequelize.define(

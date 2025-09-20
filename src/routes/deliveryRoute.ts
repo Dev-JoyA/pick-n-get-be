@@ -1,5 +1,5 @@
 import express, {Router} from "express"
-import {validateR, updateStatus, pickRide} from "../controlllers/deliveryController"
+import {validateR, updateStatus, pickRide} from "../controllers/deliveryController.ts"
 
 const route = Router();
 

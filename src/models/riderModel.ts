@@ -1,4 +1,4 @@
-import {sequelize} from  "../config/db"
+import {sequelize} from  "../config/db.ts"
 import { DataTypes } from 'sequelize'; 
 
 const RiderDetails = sequelize.define(
@@ -30,7 +30,7 @@ const RiderDetails = sequelize.define(
         },
         riderStatus : {
             type : DataTypes.ENUM,
-            values: ['Off-line', 'Available', "On-Trip"],
+            values: ['Offline', 'Available', "OnTrip"],
             defaultValue: 'Off-line'
         },
         vehicleType : {

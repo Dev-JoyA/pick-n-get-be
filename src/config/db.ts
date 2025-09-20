@@ -2,8 +2,9 @@ import { createClient } from 'redis';
 import { Server } from "socket.io";
 import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
-import { initializeApp } from "firebase/app";
-import { getDatabase, set, ref } from "firebase/database";
+import { initializeApp} from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+import { getDatabase } from "firebase-admin/database";
 
 dotenv.config();
 
@@ -15,15 +16,9 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-
+export const auth = getAuth(app);
 export const database = getDatabase(app);
-const writeData = (riderId: string, lat: number, lng: number) => {
-    set(ref(database, "riders/" + riderId), {
-    lat: lat,
-    lng: lng,
-    updatedAt: Date.now()
-   });
-}
+
 
 export const sequelize = new Sequelize('pngdb', 'postgres', password, {
   host: 'localhost',

@@ -1,8 +1,23 @@
-export type PickUpStatus = 'Pending'| 'InTransit' | 'PickedUp'| 'Delivered'| 'Cancelled'
+export enum PickUpStatus {
+    Pending = "Pending",
+    InTransit = "InTransit",
+    PickedUp = "PickedUp",
+    Delivered = "Delivered",
+    Cancelled = "Cancelled"
+}
 
-export type VehicleType = "Bike" | 'Car' | 'Trock' | 'Van'
+export enum VehicleType {
+    Bike = "Bike",
+    Car = "Car",
+    Trock = "Trock",
+    Van = "Van"
+}
 
-export type RiderStatus =  'Available'| 'Off-line' | "On-Trip"
+export enum RiderStatus {
+    Available = "Available",
+    OffLine = "Off-line",
+    OnTrip = "On-Trip"
+}
 
 export interface IRiderDetails {
     id : number;

@@ -1,4 +1,4 @@
-// import { initializeApp } from "firebase/app";
+// import { initializeApp } from "firebase-admin";
 // import { getMessaging, getToken, onMessage } from "firebase/messaging";
 // import dotenv from "dotenv"
 // dotenv.config()

@@ -10,7 +10,7 @@ import {abi} from "../../PicknGet.ts"
 
 const MAPBOX_API_KEY = process.env.MAPBOX_API_KEY;
 
-const provider = new JsonRpcProvider();
+const provider = new JsonRpcProvider('https://testnet.hashio.io/api');
 const contract = new ethers.Contract("0xfebC0e53106835Cb0eF4B65A219D092807D4d99e", abi, provider);
 
 contract.on("RiderApproved", async (riderDetails : IRiderDetails) => {
@@ -41,7 +41,7 @@ contract.on("RiderApproved", async (riderDetails : IRiderDetails) => {
     }
 });
 
-export const selectRide = async(type: VehicleType , country: string, pickupAddress: string) => {
+const selectRide = async(type: VehicleType , country: string, pickupAddress: string) => {
     const riders = await RiderDetails.findAll({ where :{ 
         [Op.and] : [
             {vehicleType : {[Op.like] : `%${type}%`}}, 
@@ -286,6 +286,32 @@ export const updatePickUpItem  = async (uid: number, itemStatus: string, id: num
         return {status : `item status have been updated : ${itemStatus}`}
     }
     
+}
+
+export const totalPickUp = async(uid : number) => {
+    const firebaseUid = uid;
+
+    const findRider = await RiderDetails.findOne({
+        where: { firebaseUid }  
+    });
+
+    if (!findRider) {
+        throw new Error("Rider not found or not authorized");
+    }
+
+    const riderId = findRider.get("riderId") as number;
+    let pickup : number = await PickUpDetails.count({
+        where : {
+            riderId,
+            pickupStatus: PickUpStatus.Delivered
+        }
+    })
+
+    return {
+        status : "successful",
+        result : pickup
+    }
+
 }
 
 

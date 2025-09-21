@@ -76,3 +76,8 @@ export const updateStatus = async(req: Request, res: Response) => {
     }
 
 }
+
+export const allPickUpByRider = async(req: Request, res: Response) => {
+    const {uid} = req.params;
+    
+} 

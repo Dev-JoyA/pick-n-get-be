@@ -9,7 +9,9 @@ import { getDatabase } from "firebase-admin/database";
 dotenv.config();
 
 const password = process.env.POSTGRES_PASSWORD;
+const uri = process.env.POSTGRES_REMOTE_URI!
 const databaseURL = process.env.DATABASE_URL;
+
 
 const firebaseConfig = {
   databaseURL: databaseURL,
@@ -20,10 +22,28 @@ export const auth = getAuth(app);
 export const database = getDatabase(app);
 
 
-export const sequelize = new Sequelize('pngdb', 'postgres', password, {
-  host: 'localhost',
-  dialect: 'postgres'
+// export const sequelize = new Sequelize('pngdb', 'postgres', password, {
+//   host: 'localhost',
+//   dialect: 'postgres'
+// });
+
+export const sequelize = new Sequelize(uri, {
+  dialect: "postgres",
+  dialectOptions: {
+    ssl: {
+      require: true,
+      rejectUnauthorized: false,
+    },
+  },
 });
+
+
+
+
+
+
+
+
 
 
 

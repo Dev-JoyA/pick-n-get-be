@@ -2,7 +2,7 @@ import {PickUpStatus, IPickUpDetails, VehicleType, RiderStatus, IRiderDetails} f
 import PickUpDetails from "../models/deliveryModel.ts"
 import RiderDetails from "../models/riderModel.ts"
 import { Op } from "sequelize";
-import { ethers, JsonRpcProvider } from "ethers";
+import { ethers, WebSocketProvider } from "ethers";
 import { sequelize, auth, database } from "../config/db.ts"
 import fetch from "node-fetch"; 
 import {abi} from "../../PicknGet.ts"
@@ -10,8 +10,12 @@ import {abi} from "../../PicknGet.ts"
 
 const MAPBOX_API_KEY = process.env.MAPBOX_API_KEY;
 
-const provider = new JsonRpcProvider('https://testnet.hashio.io/api');
-const contract = new ethers.Contract("0xfebC0e53106835Cb0eF4B65A219D092807D4d99e", abi, provider);
+const QUICK_NODE_RPC = "wss://wider-cosmological-sunset.hedera-testnet.quiknode.pro/d0fdb8aaa006c3351933c6e251155bba015fcf49/"
+const wsProvider = new WebSocketProvider(QUICK_NODE_RPC, {
+  name: "hedera-testnet",
+  chainId: 296
+});
+const contract = new ethers.Contract("0xfebC0e53106835Cb0eF4B65A219D092807D4d99e", abi, wsProvider);
 
 contract.on("RiderApproved", async (riderDetails : IRiderDetails) => {
     let firebaseUser;

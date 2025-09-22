@@ -31,7 +31,7 @@ const RiderDetails = sequelize.define(
         riderStatus : {
             type : DataTypes.ENUM,
             values: ['Offline', 'Available', "OnTrip"],
-            defaultValue: 'Off-line'
+            defaultValue: 'Offline'
         },
         vehicleType : {
             type : DataTypes.ENUM,

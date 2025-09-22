@@ -11,9 +11,13 @@ dotenv.config();
 try {
   await sequelize.authenticate();
   console.log('Postgres Connection has been established successfully.');
+  await sequelize.sync({alter : true})
+  console.log("Postgres successfully synced")
 } catch (error) {
   console.error('Unable to connect to the database:', error);
 }
+
+
 
 const app = express();
 app.use(cors());

@@ -1,5 +1,5 @@
 import {Request, Response} from "express"
-import { pickRider, validateRide, updatePickUpItem} from "../services/deliveryService.ts"
+import { pickRider, validateRide, updatePickUpItem, totalPickUp} from "../services/deliveryService.ts"
 import { IPickUpDetails } from "../interface/deliveryInterface"
 
 export const pickRide = async (req: Request, res: Response) => {
@@ -71,7 +71,7 @@ export const updateStatus = async(req: Request, res: Response) => {
         const result =  await updatePickUpItem(Number(uid), status, Number(pickupId))
         return res.status(200).json({ status : result.status})
     }catch(error){
-        console.error("error uodatingStatus ride", error)
+        console.error("error updating ride statys", error)
         return res.status(500).json({message : "server error, cant update Status", error : (error as any).message})
     }
 
@@ -79,5 +79,12 @@ export const updateStatus = async(req: Request, res: Response) => {
 
 export const allPickUpByRider = async(req: Request, res: Response) => {
     const {uid} = req.params;
-    
+    try{
+        const result = await totalPickUp(Number(uid))
+        return res.status(200).json({data : result});
+    }catch(error){
+        console.error("error getting total ride pick up", error)
+        return res.status(500).json({message : "server error, error getting total ride pick up", error : (error as any).message}) 
+    }
+
 } 

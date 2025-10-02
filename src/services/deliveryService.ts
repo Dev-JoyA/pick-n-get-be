@@ -2,22 +2,10 @@ import {PickUpStatus, IPickUpDetails, VehicleType, RiderStatus, IRiderDetails} f
 import PickUpDetails from "../models/deliveryModel.ts"
 import RiderDetails from "../models/riderModel.ts"
 import { Op } from "sequelize";
-import { ethers, WebSocketProvider } from "ethers";
 import { sequelize, auth, database } from "../config/db.ts"
 import fetch from "node-fetch"; 
-import {abi} from "../../PicknGet.ts"
 
-
-const MAPBOX_API_KEY = process.env.MAPBOX_API_KEY;
-
-const QUICK_NODE_RPC = "wss://wider-cosmological-sunset.hedera-testnet.quiknode.pro/d0fdb8aaa006c3351933c6e251155bba015fcf49/"
-const wsProvider = new WebSocketProvider(QUICK_NODE_RPC, {
-  name: "hedera-testnet",
-  chainId: 296
-});
-const contract = new ethers.Contract("0xfebC0e53106835Cb0eF4B65A219D092807D4d99e", abi, wsProvider);
-
-contract.on("RiderApproved", async (riderDetails : IRiderDetails) => {
+export const createRider = async (riderDetails : IRiderDetails) => {
     let firebaseUser;
     try{
         firebaseUser = await auth.createUser({
@@ -43,7 +31,7 @@ contract.on("RiderApproved", async (riderDetails : IRiderDetails) => {
             country: riderDetails.country
         });
     }
-});
+};
 
 const selectRide = async(type: VehicleType , country: string, pickupAddress: string) => {
     const riders = await RiderDetails.findAll({ where :{ 
@@ -53,6 +41,8 @@ const selectRide = async(type: VehicleType , country: string, pickupAddress: str
             {country : {[Op.like] : `%${country}%`}}
         ]
     }})
+
+    const MAPBOX_API_KEY = process.env.MAPBOX_API_KEY
 
     const geoUrl = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(
         pickupAddress

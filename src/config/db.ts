@@ -1,15 +1,13 @@
-import { createClient } from 'redis';
-import { Server } from "socket.io";
-import { Sequelize } from 'sequelize';
 import dotenv from 'dotenv';
 import { initializeApp} from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { getDatabase } from "firebase-admin/database";
+import mongoose from "mongoose";
 
 dotenv.config();
 
-const password = process.env.POSTGRES_PASSWORD;
-const uri = process.env.POSTGRES_REMOTE_URI!
+
+const uri: String | any = process.env.MONGODB_URI;
 const databaseURL = process.env.DATABASE_URL;
 
 
@@ -17,25 +15,17 @@ const firebaseConfig = {
   databaseURL: databaseURL,
 };
 
+export const startServer = async() => {
+  await mongoose.connect(uri);
+  console.log("Connected to the database")
+}
+
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const database = getDatabase(app);
 
 
-// export const sequelize = new Sequelize('pngdb', 'postgres', password, {
-//   host: 'localhost',
-//   dialect: 'postgres'
-// });
 
-export const sequelize = new Sequelize(uri, {
-  dialect: "postgres",
-  dialectOptions: {
-    ssl: {
-      require: true,
-      rejectUnauthorized: false,
-    },
-  },
-});
 
 
 

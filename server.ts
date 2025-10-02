@@ -3,19 +3,21 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import {sequelize}  from "./src/config/db.ts"
+import {startServer} from "./src/config/db.ts"
 import route from "./src/routes/deliveryRoute.ts"
 
 dotenv.config();
 
-try {
-  await sequelize.authenticate();
-  console.log('Postgres Connection has been established successfully.');
-  await sequelize.sync({alter : true})
-  console.log("Postgres successfully synced")
-} catch (error) {
-  console.error('Unable to connect to the database:', error);
-}
+// try {
+//   await sequelize.authenticate();
+//   console.log('Postgres Connection has been established successfully.');
+//   await sequelize.sync({alter : true})
+//   console.log("Postgres successfully synced")
+// } catch (error) {
+//   console.error('Unable to connect to the database:', error);
+// }
+
+startServer();
 
 
 

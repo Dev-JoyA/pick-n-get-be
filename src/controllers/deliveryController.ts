@@ -1,6 +1,94 @@
 import {Request, Response} from "express"
-import { pickRider, validateRide, updatePickUpItem, totalPickUp} from "../services/deliveryService.ts"
-import { IPickUpDetails } from "../interface/deliveryInterface"
+import { 
+    pickRider,
+    validateRide, 
+    updatePickUpItem, 
+    totalPickUp,
+    getAllRiders,
+    updateRiderApproval,
+    createRider,
+    getRiderById
+} from "../services/deliveryService.ts"
+import { IPickUpDetails , IRiderDetails} from "../interface/deliveryInterface"
+
+export const RegisterRider = async (req: Request, res: Response) => {
+  try {
+    const {
+      id,
+      name,
+      phoneNumber,
+      vehicleNumber,
+      vehicleType,
+      country,
+      capacity,
+      image,
+      riderStatus,
+      approvalStatus,
+    } = req.body;
+
+    if (
+      id === undefined ||
+      name == null ||
+      phoneNumber == null ||
+      vehicleNumber == null ||
+      vehicleType == null ||
+      country == null ||
+      capacity == null
+    ) {
+      return res.status(400).json({
+        status: "error",
+        message:
+          "Missing required fields: id, name, phoneNumber, vehicleNumber, vehicleType, country, capacity",
+      });
+    }
+    const numericId = Number(id);
+    if (Number.isNaN(numericId)) {
+      return res
+        .status(400)
+        .json({ status: "error", message: "id must be a number" });
+    }
+
+    const riderPayload = {
+      id: numericId,
+      name: String(name),
+      phoneNumber: String(phoneNumber),
+      vehicleNumber: String(vehicleNumber),
+      vehicleType,
+      country: String(country),
+      capacity: Number(capacity),
+      image: image ?? undefined,
+      riderStatus: riderStatus ?? undefined,
+      approvalStatus: approvalStatus ?? undefined,
+    } as Partial<IRiderDetails>;
+
+    const result = await createRider(riderPayload as IRiderDetails);
+
+    if (!result) {
+      return res
+        .status(500)
+        .json({ status: "error", message: `error creating Rider, ${status}` });
+    }
+
+    if (result.status === "Rider already exists") {
+      return res.status(409).json(result);
+    }
+
+    if (
+      typeof result.status === "string" &&
+      result.status.toLowerCase().includes("error")
+    ) {
+      return res.status(500).json(result);
+    }
+
+    return res.status(201).json(result);
+  } catch (err: any) {
+    console.error("RegisterRider error:", err);
+    return res.status(500).json({
+      status: "error",
+      message: err.message ?? "Server error",
+    });
+  }
+};
 
 export const pickRide = async (req: Request, res: Response) => {
     const {type, country, address, picked} = req.body;
@@ -49,7 +137,7 @@ export const validateR = async(req: Request, res: Response) => {
         if(!validate){
             return res.status(400).json({message : "Kindly pick an option"})
         }
-        const result = await validateRide(Number(uid), validate, Number(pickupId))
+        const result = await validateRide(validate,Number(uid), String(pickupId))
         return res.status(200).json({message : "Ride Validated",
         data : result.data.riderStatus})
     }catch(error){
@@ -68,7 +156,7 @@ export const updateStatus = async(req: Request, res: Response) => {
         return res.status(200).json({message : "Kindly pick the delivery Status"})
         }
 
-        const result =  await updatePickUpItem(Number(uid), status, Number(pickupId))
+        const result =  await updatePickUpItem(status, String(pickupId), Number(uid))
         return res.status(200).json({ status : result.status})
     }catch(error){
         console.error("error updating ride statys", error)
@@ -88,3 +176,35 @@ export const allPickUpByRider = async(req: Request, res: Response) => {
     }
 
 } 
+
+export const GetAllRiders = async (req: Request, res: Response) => {
+  try {
+    const result = await getAllRiders();
+    return res.status(200).json(result);
+  } catch (err: any) {
+    return res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+export const UpdateRiderApproval = async (req: Request, res: Response) => {
+  try {
+    const { riderId } = req.params; 
+    const action = req.body as "approve" | "reject"; 
+    const result = await updateRiderApproval(Number(riderId), action);
+    return res.status(200).json(result);
+  } catch (err: any) {
+    return res.status(500).json({ status: "error", message: err.message });
+  }
+};
+
+
+export const GetRiderById = async (req: Request, res: Response) => {
+  try {
+    const { riderId } = req.params;
+    const result = await getRiderById(Number(riderId));
+    return res.status(200).json(result);
+  } catch (err: any) {
+    return res.status(500).json({ status: "error", message: err.message });
+  }
+};
+

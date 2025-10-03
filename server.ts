@@ -17,7 +17,7 @@ dotenv.config();
 //   console.error('Unable to connect to the database:', error);
 // }
 
-startServer();
+startServer().catch(err => console.log(err));;
 
 
 

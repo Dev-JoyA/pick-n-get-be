@@ -16,9 +16,12 @@ const firebaseConfig = {
 };
 
 export const startServer = async() => {
-  await mongoose.connect(uri);
+  await mongoose.connect(uri)
   console.log("Connected to the database")
 }
+
+const db = await mongoose.createConnection(uri).asPromise();
+export const session = await db.startSession()
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);

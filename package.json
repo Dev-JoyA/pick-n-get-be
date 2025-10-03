@@ -31,7 +31,9 @@
     "redis": "^5.8.2",
     "sequelize": "^6.37.7",
     "socket.io": "^4.8.1",
-    "uuid": "^13.0.0"
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^13.0.0",
+    "yamljs": "^0.3.0"
   },
   "devDependencies": {
     "@types/cors": "^2.8.19",
@@ -44,6 +46,8 @@
     "@types/node-fetch": "^2.6.13",
     "@types/nodemon": "^1.19.6",
     "@types/redis": "^4.0.10",
+    "@types/swagger-ui-express": "^4.1.8",
+    "@types/yamljs": "^0.2.34",
     "eslint": "^9.35.0",
     "nodemon": "^3.1.10",
     "prettier": "^3.6.2",

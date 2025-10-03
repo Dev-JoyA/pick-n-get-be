@@ -8,14 +8,6 @@ import route from "./src/routes/deliveryRoute.ts"
 
 dotenv.config();
 
-// try {
-//   await sequelize.authenticate();
-//   console.log('Postgres Connection has been established successfully.');
-//   await sequelize.sync({alter : true})
-//   console.log("Postgres successfully synced")
-// } catch (error) {
-//   console.error('Unable to connect to the database:', error);
-// }
 
 startServer().catch(err => console.log(err));;
 

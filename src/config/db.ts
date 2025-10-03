@@ -8,12 +8,6 @@ dotenv.config();
 
 
 const uri: String | any = process.env.MONGODB_URI;
-const databaseURL = process.env.DATABASE_URL;
-
-
-const firebaseConfig = {
-  databaseURL: databaseURL,
-};
 
 export const startServer = async() => {
   await mongoose.connect(uri)
@@ -22,6 +16,15 @@ export const startServer = async() => {
 
 const db = await mongoose.createConnection(uri).asPromise();
 export const session = await db.startSession()
+
+
+const databaseURL = process.env.DATABASE_URL;
+
+const firebaseConfig = {
+  databaseURL: databaseURL,
+};
+
+
 
 const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);

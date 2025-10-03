@@ -1,46 +1,41 @@
-import {PickUpStatus, IPickUpDetails, VehicleType, RiderStatus, IRiderDetails} from "../interface/deliveryInterface.ts"
-import PickUpDetails from "../models/deliveryModel.ts"
-import RiderDetails from "../models/riderModel.ts"
-import { Op } from "sequelize";
-import { sequelize, auth, database } from "../config/db.ts"
+import {PickUpStatus, IPickUpDetails, VehicleType, RiderStatus, IRiderDetails, PickUp, Rider, ApprovalStatus} from "../interface/deliveryInterface.ts"
 import fetch from "node-fetch"; 
+import {session, database} from "../config/db.ts"
 
 export const createRider = async (riderDetails : IRiderDetails) => {
-    let firebaseUser;
+
     try{
-        firebaseUser = await auth.createUser({
-            phoneNumber : riderDetails.phoneNumber,
-            displayName : riderDetails.name
-        })
-    }catch(error: any){
-        if (error.code === "auth/phone-number-already-exists") {
-            firebaseUser = await auth.getUserByPhoneNumber(riderDetails.phoneNumber);
-        }
+        const exists = await Rider.findOne({ id: riderDetails.id } );
+        if (exists) {
+            return {status : "Rider already exists"}
+         }else{
+            const newRider = new Rider ({
+                id : riderDetails.id,
+                name: riderDetails.name,
+                phoneNumber: riderDetails.phoneNumber,
+                vehicleNumber: riderDetails.vehicleNumber,
+                riderStatus: riderDetails.riderStatus,
+                vehicleType: riderDetails.vehicleType,
+                image: riderDetails.image,
+                country: riderDetails.country,
+                capacity : riderDetails.capacity
+            });
+            await newRider.save();
+            return {status : `Rider created with id, ${newRider.id}`}
+         }
+    }catch(e){
+        console.error("Error creating rider", e)
+        return {status : "Error creating rider", e}
     }
-    const exists = await RiderDetails.findOne({ where: { riderId: riderDetails.id } });
-    if (!exists) {
-        await RiderDetails.create({
-            firebaseUid: firebaseUser?.uid,
-            riderId: riderDetails.id,
-            riderName: riderDetails.name,
-            phoneNumber: riderDetails.phoneNumber,
-            vehicleNumber: riderDetails.vehicleNumber,
-            riderStatus: riderDetails.riderStatus,
-            vehicleType: riderDetails.vehicleType,
-            image: riderDetails.image,
-            country: riderDetails.country
-        });
-    }
+    
 };
 
 const selectRide = async(type: VehicleType , country: string, pickupAddress: string) => {
-    const riders = await RiderDetails.findAll({ where :{ 
-        [Op.and] : [
-            {vehicleType : {[Op.like] : `%${type}%`}}, 
-            {riderStatus : RiderStatus.Available},
-            {country : {[Op.like] : `%${country}%`}}
-        ]
-    }})
+    const riders = await Rider.find({ 
+        vehicleType: { $regex: type, $options: "i" }, 
+        riderStatus: RiderStatus.Available,
+        country: { $regex: country, $options: "i" }
+    })
 
     const MAPBOX_API_KEY = process.env.MAPBOX_API_KEY
 
@@ -58,18 +53,18 @@ const selectRide = async(type: VehicleType , country: string, pickupAddress: str
 
     const [pickupLng, pickupLat] = geoData.features[0].center;
     
-    const coords=[]
+    const coords :any =[]
     for(let rider of riders){
         const riderData = rider.toJSON() as any;
 
        try{
-        const snapshot = await database.ref(`riders/${riderData.riderId}`).get();
+        const snapshot = await database.ref(`riders/${riderData.id}`).get();
         if (snapshot.exists()) {
             const location = snapshot.val();
               if(location.lat && location.lng){
                 coords.push({
-                riderId: riderData.riderId,
-                name : riderData.riderName,
+                riderId: riderData.id,
+                name : riderData.name,
                 phoneNumber: riderData.phoneNumber,
                 vehicleNumber: riderData.vehicleNumber,
                 riderStatus: riderData.riderStatus,
@@ -88,7 +83,7 @@ const selectRide = async(type: VehicleType , country: string, pickupAddress: str
     const sources = `0`;
     const coordinates = [
         `${pickupLng},${pickupLat}`,
-        ...coords.map(c => `${c.lng},${c.lat}`)
+        ...coords.map((c : any) => `${c.lng},${c.lat}`)
     ].join(";");
 
     const url = `https://api.mapbox.com/directions-matrix/v1/mapbox/driving/${coordinates}?sources=${sources}&annotations=distance,duration&access_token=${MAPBOX_API_KEY}`;
@@ -98,12 +93,12 @@ const selectRide = async(type: VehicleType , country: string, pickupAddress: str
         const data: any = await response.json();
 
         const durations = data.durations[0].slice(1);
-        const riderDurations = coords.map((c, i) => ({
+        const riderDurations = coords.map((c : any, i : any) => ({
             ...c,
             duration: durations[i]
         }));
         
-        riderDurations.sort((a, b) => a.duration - b.duration);
+        riderDurations.sort((a :any, b: any) => a.duration - b.duration);
         return riderDurations.slice(0, 5);
 
     }catch(err){
@@ -120,68 +115,64 @@ export const pickRider = async(
     picked: number,
     details: IPickUpDetails
 ) => {
-    const riderDurations = await selectRide(type, country, pickupAddress);
+    const availableRider = await selectRide(type, country, pickupAddress);
 
-    if (!riderDurations || riderDurations.length === 0) {
+    if (!availableRider || availableRider.length === 0) {
         return { status: "none", message: "No riders available" } 
     }
 
-    if (picked < 0 || picked >= riderDurations.length) {
+    if (picked < 0 || picked >= availableRider.length) {
         return { status: "error", message: "Invalid rider index" }; 
     };
-    const riderData = riderDurations[picked];
+    const riderData = availableRider[picked];
 
-    return await sequelize.transaction(async (t) => {
-    const selected = await RiderDetails.findOne({
-      where: { riderId: riderData.riderId },
-      transaction: t,
-      lock: t.LOCK.UPDATE, 
-    });
+    return await session.withTransaction(async (_session) => {
+    const selected = await Rider.findOne({ id: riderData.id })
+        .session(_session);
 
     if (!selected || selected.get("riderStatus") !== RiderStatus.Available) {
       return { status: "taken", message: "Rider already busy" };
     }
 
-    await RiderDetails.update(
+    await Rider.findOneAndUpdate(
+        { id: riderData.id },
         { riderStatus: RiderStatus.OnTrip},
-        { where: { riderId: riderData.riderId }, transaction: t  }
+        { session: _session  }
     )
 
-    const exist = await PickUpDetails.findOne({ where : {
-        [Op.and] : [
-            {riderId: riderData.riderId },
-            {userId : details.userId },
-            {itemId : details.itemId}
-        ]
-    },
-        transaction: t,
-    });
+    const exist = await PickUp.find({
+            id: selected._id ,
+            userId : details.userId ,
+            itemId : details.itemId
+        }).session(_session);
+    
 
-    if (exist) {
-      return { status: "exists", pickUpStatus: exist.get("pickUpStatus") };
+    if (exist.length > 0) {
+      return { status: "exists", pickUpStatus: exist };
     }
 
 
-    if(!exist){
-        const newPickUp = await PickUpDetails.create({
-            riderId : riderData.riderId,
+    if(!exist || exist.length <= 0){
+        const [newPickUp] = await PickUp.create([
+            {
+            riderId : selected._id,
             userId : details.userId,
             itemId : details.itemId,
             customerName : details.customerName,
             pickUpAddress : details.pickUpAddress,
-            riderName : riderData.name,
-            riderPhoneNumber : riderData.phoneNumber,
             userPhoneNumber : details.userPhoneNumber,
             pickUpStatus : details.pickUpStatus,
             description : details.description,
             image : details.image
-        }, { transaction: t });
+        }],
+          { session: _session }
+    );
 
     return {
         status : "success",
         data : {
-            pickUpId : newPickUp.get('id'),
-            riderId: riderData.riderId,
+            pickUpId : newPickUp.id,
+            riderId: selected._id,
             userId : details.userId,
             itemId : details.itemId,
             pickUpAddress: details.pickUpAddress,
@@ -196,41 +187,48 @@ export const pickRider = async(
   }); 
 }
 
-export const validateRide = async(uid: number, validate: string, id: number) => {
-    const firebaseUid = uid;
-
-    const findRider = await RiderDetails.findOne({
-        where: { firebaseUid }  
-    });
+export const validateRide = async(validate: string, riderUUID: number, pickupUUID?: string) => {
+    const findRider = await Rider.findOne({ id: riderUUID } );
 
     if (!findRider) {
         throw new Error("Rider not found or not authorized");
     }
-
-    const riderId = findRider.get("riderId") as number;
 
     let riderStatus: RiderStatus;
     let pickupStatus: PickUpStatus | null = null;
 
     if (validate === "cancel") {
         riderStatus = RiderStatus.Available
-        await RiderDetails.update(
-        { riderStatus},
-        { where: { riderId } }
+        await Rider.findOneAndUpdate(
+        { id : riderUUID},
+        { riderStatus } ,
+        { new: true }
         );
     } else if (validate === "offline") {
         riderStatus = RiderStatus.OffLine
-        await RiderDetails.update(
+        await Rider.findOneAndUpdate(
+        { id : riderUUID},
         { riderStatus},
-        { where: { riderId } }
+        { new: true }
         );
     }else if(validate == "available"){
+        if (!pickupUUID) throw new Error("pickupUUID required for 'available' action");
         riderStatus = RiderStatus.OnTrip
         pickupStatus = PickUpStatus.InTransit;
-        await PickUpDetails.update(
-            { pickUpStatus: pickupStatus },
-            { where: { pickUpId: id, riderId } }
+        await PickUp.findOneAndUpdate(
+            {id : pickupUUID},
+            {
+                riderId: findRider._id, 
+                pickUpStatus: pickupStatus,
+            },
+            { new: true }
         );
+        await Rider.findOneAndUpdate(
+            { id: riderUUID },
+            { riderStatus },
+            { new: true }
+        );
+
     }else {
         throw new Error("Invalid validation option");   
     }
@@ -238,28 +236,27 @@ export const validateRide = async(uid: number, validate: string, id: number) => 
     return {
         status : "success",
         data : {
-            firebaseId : firebaseUid,
-            riderId ,
+            pickupUUID,
+            riderId : findRider.id ,
             pickupStatus, 
             riderStatus
         }
     }
 };
 
-export const updatePickUpItem  = async (uid: number, itemStatus: string, id: number) => {
-    const firebaseUid = uid;
-
-    const findRider = await RiderDetails.findOne({
-        where: { firebaseUid }  
-    });
+export const updatePickUpItem  = async (itemStatus: string, pickupUUID: string, riderUUID : number ) => {
+   const findRider = await Rider.findOne({ id: riderUUID } );
 
     if (!findRider) {
         throw new Error("Rider not found or not authorized");
+    };
+
+    const item: any = await PickUp.findOne({id : pickupUUID})
+
+    if (!item) {
+        return { status: "Pickup not found" };
     }
 
-    const riderId = findRider.get("riderId") as number;
-
-    const item: any = await PickUpDetails.findOne({where : {id}})
 
     if(item.pickUpStatus == "Delivered"){
         return {status : "item Already delivered"}
@@ -273,32 +270,28 @@ export const updatePickUpItem  = async (uid: number, itemStatus: string, id: num
         return {status : `item stattus is already: ${itemStatus}`}
     } else {
         item.pickUpStatus = itemStatus;
-        await PickUpDetails.update(
-            { pickUpStatus: itemStatus },
-            { where: { id: id, riderId } }
-        )
+        await PickUp.findOneAndUpdate(
+            {id : pickupUUID},
+            {
+                riderId: findRider._id, 
+                pickUpStatus: itemStatus,
+            },
+            { new: true }
+        );
         return {status : `item status have been updated : ${itemStatus}`}
     }
     
 }
 
-export const totalPickUp = async(uid : number) => {
-    const firebaseUid = uid;
-
-    const findRider = await RiderDetails.findOne({
-        where: { firebaseUid }  
-    });
+export const totalPickUp = async(riderUUID : number) => {
+    const findRider = await Rider.findOne({ id: riderUUID } );
 
     if (!findRider) {
         throw new Error("Rider not found or not authorized");
     }
-
-    const riderId = findRider.get("riderId") as number;
-    let pickup : number = await PickUpDetails.count({
-        where : {
-            riderId,
-            pickupStatus: PickUpStatus.Delivered
-        }
+    let pickup : number = await PickUp.countDocuments({
+            riderId: findRider._id,
+            pickUpStatus: PickUpStatus.Delivered
     })
 
     return {
@@ -307,6 +300,85 @@ export const totalPickUp = async(uid : number) => {
     }
 
 }
+
+export const getAllRiders = async () => {
+  try {
+    const riders = await Rider.find({});
+    return {
+      status: "success",
+      count: riders.length,
+      data: riders
+    };
+  } catch (error: any) {
+    return {
+      status: "error",
+      message: error.message
+    };
+  }
+};
+
+
+export const updateRiderApproval = async (riderId: number, action: "approve" | "reject") => {
+  try {
+    const rider = await Rider.findOne({ id: riderId });
+    if (!rider) {
+      return {
+        status: "error",
+        message: "Rider not found"
+      };
+    }
+
+    let newStatus: ApprovalStatus;
+    if (action === "approve") {
+      newStatus = ApprovalStatus.Approve;
+    } else {
+      newStatus = ApprovalStatus.Reject;
+    }
+
+    const updatedRider = await Rider.findOneAndUpdate(
+      { id: riderId },
+      { approvalStatus: newStatus },
+      { new: true } 
+    );
+
+    return {
+      status: "success",
+      message: `Rider ${action}d successfully`,
+      data: updatedRider
+    };
+  } catch (error: any) {
+    return {
+      status: "error",
+      message: error.message
+    };
+  }
+};
+
+export const getRiderById = async (riderId: number) => {
+  try {
+    const rider = await Rider.findOne({ id: riderId });
+
+    if (!rider) {
+      return {
+        status: "error",
+        message: "Rider not found"
+      };
+    }
+
+    return {
+      status: "success",
+      data: rider
+    };
+  } catch (error: any) {
+    return {
+      status: "error",
+      message: error.message
+    };
+  }
+};
+
+
+
 
 
 

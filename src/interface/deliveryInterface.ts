@@ -16,6 +16,12 @@ export enum VehicleType {
     Van = "Van"
 }
 
+export enum ApprovalStatus {
+    Pending = "Pending",
+    Approve = "Approved",
+    Reject = "Reject"
+}
+
 export enum RiderStatus {
     Available = "Available",
     OffLine = "Off-line",
@@ -23,12 +29,13 @@ export enum RiderStatus {
 }
 
 export interface IRiderDetails extends Document {
-    id : string;
+    id : number;
     name : string;
     phoneNumber : string;
     vehicleNumber : string;
     riderStatus : RiderStatus;
     vehicleType : VehicleType;
+    approvalStatus : ApprovalStatus;
     image : string;
     country: string;
     capacity : number;
@@ -37,13 +44,11 @@ export interface IRiderDetails extends Document {
 
 export interface IPickUpDetails extends Document{
     id: string; 
-    riderId: number;
+    riderId: any;
     userId: number;
     itemId: number;
     customerName: string;
     pickUpAddress: string;
-    riderName: string;
-    riderPhoneNumber: string;
     userPhoneNumber: string;
     pickUpStatus: PickUpStatus;
     description?: string;
@@ -55,10 +60,9 @@ export interface IPickUpDetails extends Document{
 const RiderSchema = new mongoose.Schema<IRiderDetails>(
   {
     id: { 
-        type: String, 
+        type: Number, 
         required: true, 
         unique: true,
-        default: () => `VPD${uuidv4().substring(0, 8)}`
      },
     name: { type: String, required: true },
     phoneNumber: { type: String, required: true },
@@ -72,6 +76,11 @@ const RiderSchema = new mongoose.Schema<IRiderDetails>(
       type: String,
       enum: Object.values(VehicleType),
       required: true,
+    },
+    approvalStatus: {
+      type: String,
+      enum: Object.values(ApprovalStatus),
+      default: ApprovalStatus.Pending
     },
     image: { type: String },
     country: { type: String, required: true },
@@ -88,13 +97,11 @@ const PickUpSchema = new mongoose.Schema<IPickUpDetails>(
          unique: true,
          default: () => `VPD${uuidv4().substring(0, 8)}`
         },
-    riderId: { type: Number, required: true },
+    riderId: { type: mongoose.Schema.Types.ObjectId, ref: "Rider", required: true },
     userId: { type: Number, required: true },
     itemId: { type: Number, required: true },
     customerName: { type: String, required: true },
     pickUpAddress: { type: String, required: true },
-    riderName: { type: String, required: true },
-    riderPhoneNumber: { type: String, required: true },
     userPhoneNumber: { type: String, required: true },
     pickUpStatus: {
       type: String,

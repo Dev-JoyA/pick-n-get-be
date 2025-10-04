@@ -6,7 +6,7 @@ info:
 servers:
   - url: https://pick-n-get-be.onrender.com
     description: Production server
-  - url: http://localhost:5000
+  - url: http://localhost:7000
     description: Development server
 
 components:
@@ -41,7 +41,7 @@ components:
         itemId:
           type: number
         userId:
-          type: number 
+          type: number
 
     Error:
       type: object
@@ -118,50 +118,50 @@ paths:
               type: string
               example: "pending"
     responses:
-      '201':
+      "201":
         description: Rider registered successfully
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Success'
-      '400':
+              $ref: "#/components/schemas/Success"
+      "400":
         description: Missing required fields or invalid data
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Error'
-      '409':
+              $ref: "#/components/schemas/Error"
+      "409":
         description: Rider already exists
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Error'
-      '500':
+              $ref: "#/components/schemas/Error"
+      "500":
         description: Internal server error
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/Error'
+              $ref: "#/components/schemas/Error"
 
     get:
       tags:
         - Riders
       summary: Get all riders
       responses:
-        '200':
+        "200":
           description: Successfully retrieved all riders
           content:
             application/json:
               schema:
                 type: array
                 items:
-                  $ref: '#/components/schemas/Rider'
-        '500':
+                  $ref: "#/components/schemas/Rider"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/v1/riders/{riderId}:
     get:
@@ -176,18 +176,18 @@ paths:
             type: number
           example: 1
       responses:
-        '200':
+        "200":
           description: Successfully retrieved rider
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Rider'
-        '500':
+                $ref: "#/components/schemas/Rider"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/v1/riders/{riderId}/approval:
     patch:
@@ -210,18 +210,18 @@ paths:
               enum: [approve, reject]
               example: "approve"
       responses:
-        '200':
+        "200":
           description: Rider approval status updated
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Success'
-        '500':
+                $ref: "#/components/schemas/Success"
+        "500":
           description: Internal server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/v1/pick-ride/{user}/{item}:
     post:
@@ -276,7 +276,7 @@ paths:
                       type: number
                       example: 1
       responses:
-        '201':
+        "201":
           description: Rider assigned successfully
           content:
             application/json:
@@ -288,7 +288,7 @@ paths:
                     example: "Rider assigned successfully"
                   data:
                     type: object
-        '200':
+        "200":
           description: No riders available or rider busy
           content:
             application/json:
@@ -297,13 +297,13 @@ paths:
                 properties:
                   message:
                     type: string
-        '400':
+        "400":
           description: Missing fields or unauthorized
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '409':
+                $ref: "#/components/schemas/Error"
+        "409":
           description: Pending pickup exists
           content:
             application/json:
@@ -314,12 +314,12 @@ paths:
                     type: string
                   pickUpStatus:
                     type: string
-        '500':
+        "500":
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/v1/validate-ride/{rider}/{pick-up-id}:
     post:
@@ -352,7 +352,7 @@ paths:
                   type: boolean
                   example: true
       responses:
-        '200':
+        "200":
           description: Ride validated successfully
           content:
             application/json:
@@ -364,18 +364,18 @@ paths:
                     example: "Ride Validated"
                   data:
                     type: string
-        '400':
+        "400":
           description: Missing validation option
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
-        '500':
+                $ref: "#/components/schemas/Error"
+        "500":
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/v1/update-status/{rider}/{pick-up-id}:
     post:
@@ -408,7 +408,7 @@ paths:
                   type: string
                   example: "delivered"
       responses:
-        '200':
+        "200":
           description: Status updated successfully
           content:
             application/json:
@@ -417,12 +417,12 @@ paths:
                 properties:
                   status:
                     type: string
-        '500':
+        "500":
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"
 
   /api/v1/total-ride/{rider}:
     get:
@@ -437,7 +437,7 @@ paths:
             type: number
           example: 1
       responses:
-        '200':
+        "200":
           description: Successfully retrieved rider pickups
           content:
             application/json:
@@ -448,9 +448,9 @@ paths:
                     type: array
                     items:
                       type: object
-        '500':
+        "500":
           description: Server error
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Error'
+                $ref: "#/components/schemas/Error"

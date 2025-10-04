@@ -1,4 +1,4 @@
-import {Router} from "express"
+import express from "express"
 import {validateR, 
     updateStatus, 
     pickRide,
@@ -9,7 +9,8 @@ import {validateR,
     RegisterRider
  } from "../controllers/deliveryController.ts"
 
-const route = Router();
+
+const route = express.Router();
 
 route.post("/riders", RegisterRider);
 
@@ -26,7 +27,6 @@ route.get("/riders", GetAllRiders);
 route.get("/riders/:riderId", GetRiderById);
 
 route.patch("/riders/:riderId/approval", UpdateRiderApproval);
-
 
 
 export default route;

@@ -126,7 +126,7 @@ export const pickRider = async(
     };
     const riderData = availableRider[picked];
 
-    return await session.withTransaction(async (_session) => {
+    return await session.withTransaction(async (_session: any) => {
     const selected = await Rider.findOne({ id: riderData.id })
         .session(_session);
 

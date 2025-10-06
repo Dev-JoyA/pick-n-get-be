@@ -10,7 +10,12 @@ import {
   getRiderById,
 } from '../services/deliveryService.ts';
 
-import { IPickUpDetails, IRiderDetails, Rider, VehicleType } from '../interface/deliveryInterface';
+import {
+  IPickUpDetails,
+  IRiderDetails,
+  Rider,
+  VehicleType,
+} from '../interface/deliveryInterface.ts';
 
 export const RegisterRider = async (req: Request, res: Response) => {
   try {

@@ -1,11 +1,12 @@
-import express, {Request , Response} from 'express';
+import express, { Request, Response } from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import {startServer} from "./src/config/db.ts"
-import route from "./src/routes/deliveryRoute.ts"
-import cron from 'node-cron'
+import { startServer } from './src/config/db.ts';
+import route from './src/routes/deliveryRoute.ts';
+import pickupRoutes from './src/routes/pickupRoute';
+import cron from 'node-cron';
 import https from 'https';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
@@ -33,7 +34,7 @@ app.use(express.urlencoded({ limit: '50mb', extended: true }));
 try {
   const swaggerPath = path.join(__dirname, 'src', 'swagger', 'swagger.yaml');
   console.log('Looking for swagger file at:', swaggerPath);
-  
+
   const swaggerDocument = YAML.load(swaggerPath);
 
   const swaggerOptions = {
@@ -50,9 +51,9 @@ try {
 
 // Root endpoint
 app.get('/', (req: Request, res: Response) => {
-  res.status(200).json({ 
+  res.status(200).json({
     message: 'Welcome to Pick N Get API',
-    documentation: `http://localhost:${PORT}/api-docs`
+    documentation: `http://localhost:${PORT}/api-docs`,
   });
 });
 
@@ -62,9 +63,10 @@ app.get('/health', (req: Request, res: Response) => {
 });
 
 // API routes
-app.use("/api/v1", route);
+app.use('/api/v1', route);
+app.use('/api/v1/pickups', pickupRoutes);
 
-// 404 handler 
+// 404 handler
 app.use((req: Request, res: Response) => {
   res.status(404).json({ error: 'Route not found' });
 });
@@ -75,10 +77,11 @@ app.listen(PORT, () => {
   console.log(`API Documentation: http://localhost:${PORT}/api-docs`);
 });
 
-startServer().catch(err => console.log(err));
+startServer().catch((err) => console.log(err));
 
 function keepAlive(url: string) {
-  https.get(url, (res) => {
+  https
+    .get(url, (res) => {
       console.log(`Status: ${res.statusCode}`);
     })
     .on('error', (error) => {

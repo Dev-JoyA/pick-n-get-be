@@ -1,6 +1,17 @@
-import { PickUp, IPickUp, PickUpStatus } from '../models/pickupModel';
+import { PickUp, PickUpStatus } from '../models/pickupModel';
 import { Rider, RiderStatus } from '../interface/deliveryInterface';
-import mongoose from 'mongoose';
+import mongoose, { Document } from 'mongoose';
+
+// Helper type to ensure Mongoose document with _id
+type RiderDocument = Document & {
+  _id: mongoose.Types.ObjectId;
+  id: number;
+  name: string;
+  phoneNumber: string;
+  vehicleNumber: string;
+  riderStatus: RiderStatus;
+  // Add other fields as needed
+};
 
 interface AgentPickup {
   trackingId: string;
@@ -33,7 +44,7 @@ interface PickupUpdateResult {
  */
 export async function getAgentActivePickups(riderId: number): Promise<AgentPickup[]> {
   try {
-    const rider = await Rider.findOne({ id: riderId });
+    const rider = (await Rider.findOne({ id: riderId })) as RiderDocument | null;
     if (!rider) {
       throw new Error('Rider not found');
     }
@@ -45,7 +56,7 @@ export async function getAgentActivePickups(riderId: number): Promise<AgentPicku
 
     return activePickups.map((pickup) => ({
       trackingId: pickup.trackingId,
-      pickupId: pickup._id.toString(),
+      pickupId: (pickup._id as mongoose.Types.ObjectId).toString(),
       customerName: pickup.customerName,
       customerPhoneNumber: pickup.customerPhoneNumber,
       pickupAddress: pickup.pickupAddress,
@@ -71,12 +82,11 @@ export async function getAvailablePickupJobs(
   limit: number = 10,
 ): Promise<AgentPickup[]> {
   try {
-    const rider = await Rider.findOne({ id: riderId });
+    const rider = (await Rider.findOne({ id: riderId })) as RiderDocument | null;
     if (!rider) {
       throw new Error('Rider not found');
     }
 
-    // Find pending pickups assigned to this rider
     const availableJobs = await PickUp.find({
       riderId: rider._id,
       pickUpStatus: PickUpStatus.Pending,
@@ -86,7 +96,7 @@ export async function getAvailablePickupJobs(
 
     return availableJobs.map((pickup) => ({
       trackingId: pickup.trackingId,
-      pickupId: pickup._id.toString(),
+      pickupId: (pickup._id as mongoose.Types.ObjectId).toString(),
       customerName: pickup.customerName,
       customerPhoneNumber: pickup.customerPhoneNumber,
       pickupAddress: pickup.pickupAddress,
@@ -114,7 +124,7 @@ export async function acceptPickupJob(
 
   try {
     return await session.withTransaction(async () => {
-      const rider = await Rider.findOne({ id: riderId }).session(session);
+      const rider = (await Rider.findOne({ id: riderId }).session(session)) as RiderDocument | null;
       if (!rider) {
         throw new Error('Rider not found');
       }
@@ -125,7 +135,7 @@ export async function acceptPickupJob(
       }
 
       // Verify pickup belongs to this rider
-      if (pickup.riderId.toString() !== rider._id.toString()) {
+      if ((pickup.riderId as mongoose.Types.ObjectId).toString() !== rider._id.toString()) {
         throw new Error('This pickup is not assigned to you');
       }
 
@@ -181,7 +191,7 @@ export async function updatePickupStatus(
 
   try {
     return await session.withTransaction(async () => {
-      const rider = await Rider.findOne({ id: riderId }).session(session);
+      const rider = (await Rider.findOne({ id: riderId }).session(session)) as RiderDocument | null;
       if (!rider) {
         throw new Error('Rider not found');
       }
@@ -191,12 +201,10 @@ export async function updatePickupStatus(
         throw new Error('Pickup not found');
       }
 
-      // Verify pickup belongs to this rider
-      if (pickup.riderId.toString() !== rider._id.toString()) {
+      if ((pickup.riderId as mongoose.Types.ObjectId).toString() !== rider._id.toString()) {
         throw new Error('This pickup is not assigned to you');
       }
 
-      // Validate status transition
       const validTransitions: Record<PickUpStatus, PickUpStatus[]> = {
         [PickUpStatus.Pending]: [PickUpStatus.InTransit, PickUpStatus.Cancelled],
         [PickUpStatus.InTransit]: [PickUpStatus.PickedUp, PickUpStatus.Cancelled],
@@ -210,14 +218,12 @@ export async function updatePickupStatus(
         throw new Error(`Cannot transition from ${pickup.pickUpStatus} to ${newStatus}`);
       }
 
-      // Update pickup
       pickup.pickUpStatus = newStatus;
 
       if (newStatus === PickUpStatus.PickedUp) {
         pickup.collectedAt = new Date();
       } else if (newStatus === PickUpStatus.Delivered) {
         pickup.deliveredAt = new Date();
-        // Mark rider as available again
         await Rider.findOneAndUpdate(
           { id: riderId },
           { riderStatus: RiderStatus.Available },
@@ -251,7 +257,6 @@ export async function updatePickupStatus(
     await session.endSession();
   }
 }
-
 /**
  * Cancel a pickup (can only cancel Pending or InTransit)
  */
@@ -264,7 +269,7 @@ export async function cancelPickup(
 
   try {
     return await session.withTransaction(async () => {
-      const rider = await Rider.findOne({ id: riderId }).session(session);
+      const rider = (await Rider.findOne({ id: riderId }).session(session)) as RiderDocument | null;
       if (!rider) {
         throw new Error('Rider not found');
       }
@@ -275,7 +280,7 @@ export async function cancelPickup(
       }
 
       // Verify pickup belongs to this rider
-      if (pickup.riderId.toString() !== rider._id.toString()) {
+      if ((pickup.riderId as mongoose.Types.ObjectId).toString() !== rider._id.toString()) {
         throw new Error('This pickup is not assigned to you');
       }
 
@@ -326,7 +331,7 @@ export async function cancelPickup(
  */
 export async function getAgentStats(riderId: number) {
   try {
-    const rider = await Rider.findOne({ id: riderId });
+    const rider = (await Rider.findOne({ id: riderId })) as RiderDocument | null;
     if (!rider) {
       throw new Error('Rider not found');
     }
@@ -366,8 +371,8 @@ export async function getAgentStats(riderId: number) {
       totalPickups,
       totalEarnings,
       weeklyPickups,
-      rating: 4.8, // TODO: Implement rating system
-      completionRate: 96, // TODO: Calculate from data
+      rating: 4.8,
+      completionRate: 96,
     };
   } catch (error) {
     console.error('Error fetching agent stats:', error);

@@ -5,7 +5,9 @@ import helmet from 'helmet';
 import morgan from 'morgan';
 import { startServer } from './src/config/db.ts';
 import route from './src/routes/deliveryRoute.ts';
+import locationRoutes from './src/routes/locationRoute';
 import pickupRoutes from './src/routes/pickupRoute';
+import agentRoutes from './src/routes/agentRoute';
 import cron from 'node-cron';
 import https from 'https';
 import swaggerUi from 'swagger-ui-express';
@@ -65,6 +67,8 @@ app.get('/health', (req: Request, res: Response) => {
 // API routes
 app.use('/api/v1', route);
 app.use('/api/v1/pickups', pickupRoutes);
+app.use('/api/v1/location', locationRoutes);
+app.use('/api/v1/agents', agentRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

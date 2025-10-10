@@ -1533,6 +1533,3 @@ paths:
                 message:
                   type: string
                   example: "Location removed successfully"
-# ============================================
-# SCHEMAS
-# ============================================

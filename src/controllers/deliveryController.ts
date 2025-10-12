@@ -251,14 +251,43 @@ export const GetAllRiders = async (req: Request, res: Response) => {
   }
 };
 
+// export const UpdateRiderApproval = async (req: Request, res: Response) => {
+//   try {
+//     const { riderId } = req.params;
+//     const action = req.body as 'approve' | 'reject';
+//     const result = await updateRiderApproval(Number(riderId), action);
+//     return res.status(200).json(result);
+//   } catch (err: any) {
+//     return res.status(500).json({ status: 'error', message: err.message });
+//   }
+// };
+
 export const UpdateRiderApproval = async (req: Request, res: Response) => {
   try {
     const { riderId } = req.params;
-    const action = req.body as 'approve' | 'reject';
+    const { status } = req.body; // ✅ Extract from body properly
+
+    // Validate action
+    if (!status || !['approve', 'reject'].includes(status.toLowerCase())) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Status must be either "approve" or "reject"',
+      });
+    }
+
+    const action = status.toLowerCase() as 'approve' | 'reject';
     const result = await updateRiderApproval(Number(riderId), action);
+
+    if (result.status === 'error') {
+      return res.status(404).json(result);
+    }
+
     return res.status(200).json(result);
   } catch (err: any) {
-    return res.status(500).json({ status: 'error', message: err.message });
+    return res.status(500).json({
+      status: 'error',
+      message: err.message,
+    });
   }
 };
 

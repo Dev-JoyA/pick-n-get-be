@@ -3,7 +3,7 @@ import {
   updateRiderLocation,
   getRiderLocation,
   deleteRiderLocation,
-} from '../services/locationService';
+} from '../services/locationService.ts';
 
 /**
  * Update rider location

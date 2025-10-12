@@ -6,8 +6,8 @@ import {
   updatePickupStatus,
   cancelPickup,
   getAgentStats,
-} from '../services/agentPickupService';
-import { PickUpStatus } from '../models/pickupModel';
+} from '../services/agentPickupService.ts';
+import { PickUpStatus } from '../models/pickupModel.ts';
 
 /**
  * Get agent dashboard stats

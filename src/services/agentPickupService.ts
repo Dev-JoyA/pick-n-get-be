@@ -1,5 +1,5 @@
-import { PickUp, PickUpStatus } from '../models/pickupModel';
-import { Rider, RiderStatus } from '../interface/deliveryInterface';
+import { PickUp, PickUpStatus } from '../models/pickupModel.ts';
+import { Rider, RiderStatus } from '../interface/deliveryInterface.ts';
 import mongoose, { Document } from 'mongoose';
 
 // Helper type to ensure Mongoose document with _id

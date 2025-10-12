@@ -1,5 +1,5 @@
 import express from 'express';
-import { findRiders, createPickupRequest } from '../controllers/pickupController';
+import { findRiders, createPickupRequest } from '../controllers/pickupController.ts';
 
 const router = express.Router();
 

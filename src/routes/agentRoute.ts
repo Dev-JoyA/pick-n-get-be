@@ -6,7 +6,7 @@ import {
   acceptJob,
   updateStatus,
   cancelPickupJob,
-} from '../controllers/agentController';
+} from '../controllers/agentController.ts';
 
 const router = express.Router();
 

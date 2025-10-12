@@ -1,6 +1,6 @@
-import { PickUp, IPickUp, PickUpStatus } from '../models/pickupModel';
-import { Rider, RiderStatus } from '../interface/deliveryInterface';
-import { session } from '../config/db';
+import { PickUp, IPickUp, PickUpStatus } from '../models/pickupModel.ts';
+import { Rider, RiderStatus } from '../interface/deliveryInterface.ts';
+// import { session } from '../config/db';
 import mongoose from 'mongoose';
 
 interface CreatePickupData {

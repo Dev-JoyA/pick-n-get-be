@@ -1,4 +1,4 @@
-import { database } from '../config/db';
+import { database } from '../config/db.ts';
 
 interface LocationData {
   lat: number;

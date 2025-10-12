@@ -171,4 +171,4 @@ PickUpSchema.index({ riderId: 1, pickUpStatus: 1 });
 PickUpSchema.index({ userId: 1, createdAt: -1 });
 PickUpSchema.index({ trackingId: 1 });
 
-export const PickUp = mongoose.model<IPickUp>('PickUp', PickUpSchema);
+export const PickUp = mongoose.models.PickUp || mongoose.model<IPickUp>('PickUp', PickUpSchema);

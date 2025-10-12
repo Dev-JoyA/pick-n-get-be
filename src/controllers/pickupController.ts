@@ -1,8 +1,8 @@
 import { Request, Response } from 'express';
-import { findNearestRiders } from '../services/riderFinderService';
-import { createPickup } from '../services/pickupService';
-import { calculateVehicleType } from '../utils/vehicleCalculator';
-import { VehicleType } from '../interface/deliveryInterface';
+import { findNearestRiders } from '../services/riderFinderService.ts';
+import { createPickup } from '../services/pickupService.ts';
+import { calculateVehicleType } from '../utils/vehicleCalculator.ts';
+// import { VehicleType } from '../interface/deliveryInterface';
 
 /**
  * Find nearest available riders for a pickup request

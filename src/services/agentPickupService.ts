@@ -213,7 +213,7 @@ export async function updatePickupStatus(
         [PickUpStatus.Cancelled]: [],
       };
 
-      const allowedStatuses = validTransitions[pickup.pickUpStatus];
+      const allowedStatuses = validTransitions[pickup.pickUpStatus as PickUpStatus];
       if (!allowedStatuses.includes(newStatus)) {
         throw new Error(`Cannot transition from ${pickup.pickUpStatus} to ${newStatus}`);
       }

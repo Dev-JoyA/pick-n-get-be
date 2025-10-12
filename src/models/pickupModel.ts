@@ -60,8 +60,7 @@ const PickUpSchema = new Schema<IPickUp>(
     trackingId: {
       type: String,
       required: true,
-      unique: true,
-      index: true,
+      unique: true, // unique already creates an index, no need for index: true
     },
     riderId: {
       type: Schema.Types.ObjectId,
@@ -166,9 +165,9 @@ PickUpSchema.pre('save', async function (next) {
   next();
 });
 
-// Index for efficient queries
+// Compound indexes for efficient queries
 PickUpSchema.index({ riderId: 1, pickUpStatus: 1 });
 PickUpSchema.index({ userId: 1, createdAt: -1 });
-PickUpSchema.index({ trackingId: 1 });
+// Removed duplicate: PickUpSchema.index({ trackingId: 1 }); - already indexed via unique: true
 
 export const PickUp = mongoose.models.PickUp || mongoose.model<IPickUp>('PickUp', PickUpSchema);

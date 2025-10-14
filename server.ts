@@ -3,8 +3,8 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import helmet from 'helmet';
 import morgan from 'morgan';
-import {startServer} from "./src/config/db.ts"
-import route from "./src/routes/deliveryRoute.ts"
+import {startServer} from "./src/config/db.js"
+import route from "./src/routes/deliveryRoute.js"
 import cron from 'node-cron'
 import https from 'https';
 import swaggerUi from 'swagger-ui-express';

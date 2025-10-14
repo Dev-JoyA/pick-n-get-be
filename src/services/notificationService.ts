@@ -1,4 +1,4 @@
-import { messaging } from "../config/firebase";
+import { messaging } from "../config/firebase.js";
 
 export const sendNotification = async (
   token: string,

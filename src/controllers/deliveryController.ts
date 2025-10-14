@@ -8,8 +8,8 @@ import {
     updateRiderApproval,
     createRider,
     getRiderById
-} from "../services/deliveryService.ts"
-import { IPickUpDetails , IRiderDetails} from "../interface/deliveryInterface"
+} from "../services/deliveryService.js"
+import { IPickUpDetails , IRiderDetails} from "../interface/deliveryInterface.js"
 
 export const RegisterRider = async (req: Request, res: Response) => {
   try {

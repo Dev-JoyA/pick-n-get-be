@@ -1,6 +1,6 @@
-import {PickUpStatus, IPickUpDetails, VehicleType, RiderStatus, IRiderDetails, PickUp, Rider, ApprovalStatus} from "../interface/deliveryInterface.ts"
+import {PickUpStatus, IPickUpDetails, VehicleType, RiderStatus, IRiderDetails, PickUp, Rider, ApprovalStatus} from "../interface/deliveryInterface.js"
 import fetch from "node-fetch"; 
-import {session, database} from "../config/db.ts"
+import {session, database} from "../config/db.js"
 
 export const createRider = async (riderDetails : IRiderDetails) => {
 

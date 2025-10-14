@@ -64,8 +64,8 @@ export interface IPickUpDetails extends Document {
   userId: number;
   itemId: number;
   customerName: string;
-  pickUpAddress: string;
-  userPhoneNumber: string;
+  pickupAddress: string;
+  customerPhoneNumber: string;
   pickUpStatus: PickUpStatus;
   description?: string;
   image?: string;
@@ -185,11 +185,11 @@ const PickUpSchema = new mongoose.Schema<IPickUpDetails>(
       type: String,
       required: true,
     },
-    pickUpAddress: {
+    pickupAddress: {
       type: String,
       required: true,
     },
-    userPhoneNumber: {
+    customerPhoneNumber: {
       type: String,
       required: true,
     },

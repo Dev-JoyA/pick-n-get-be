@@ -16,6 +16,7 @@ import { dirname } from 'path';
 dotenv.config();
 
 const app = express();
+
 const PORT = process.env.PORT || 5000;
 
 // For ES modules - get __dirname equivalent

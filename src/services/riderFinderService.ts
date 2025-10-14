@@ -132,19 +132,32 @@ async function calculateDistancesAndDurations(
 /**
  * Format duration in seconds to readable ETA string
  */
-function formatETA(durationInSeconds: number): string {
-  if (durationInSeconds < 60) {
-    return '< 1 min';
-  } else if (durationInSeconds < 3600) {
-    const minutes = Math.round(durationInSeconds / 60);
-    return `${minutes} min${minutes > 1 ? 's' : ''}`;
+// function formatETA(durationInSeconds: number): string {
+//   if (durationInSeconds < 60) {
+//     return '< 1 min';
+//   } else if (durationInSeconds < 3600) {
+//     const minutes = Math.round(durationInSeconds / 60);
+//     return `${minutes} min${minutes > 1 ? 's' : ''}`;
+//   } else {
+//     const hours = Math.floor(durationInSeconds / 3600);
+//     const minutes = Math.round((durationInSeconds % 3600) / 60);
+//     return `${hours}h ${minutes}m`;
+//   }
+// }
+function formatETA(seconds: number): string {
+  if (seconds < 60) {
+    return `${Math.round(seconds)} secs`;
+  } else if (seconds < 3600) {
+    return `${Math.round(seconds / 60)} mins`;
+  } else if (seconds < 86400) {
+    const hours = Math.floor(seconds / 3600);
+    const mins = Math.round((seconds % 3600) / 60);
+    return mins > 0 ? `${hours}h ${mins}m` : `${hours}h`;
   } else {
-    const hours = Math.floor(durationInSeconds / 3600);
-    const minutes = Math.round((durationInSeconds % 3600) / 60);
-    return `${hours}h ${minutes}m`;
+    const days = Math.floor(seconds / 86400);
+    return `${days} day${days > 1 ? 's' : ''}`;
   }
 }
-
 /**
  * Find nearest available riders for a pickup request
  * Returns up to 5 riders sorted by distance

@@ -87,26 +87,29 @@ export const createPickupRequest = async (req: Request, res: Response) => {
       estimatedEarnings,
       riderId,
     } = req.body;
-
     // Validate required fields
-    if (
-      !userId ||
-      !itemId ||
-      !customerName ||
-      !customerPhoneNumber ||
-      !pickupAddress ||
-      !itemCategory ||
-      !itemWeight ||
-      !estimatedEarnings ||
-      !riderId
-    ) {
+    const missingFields: string[] = [];
+
+    if (!userId) missingFields.push('userId');
+    if (!itemId) missingFields.push('itemId');
+    if (!customerName) missingFields.push('customerName');
+    if (!customerPhoneNumber) missingFields.push('customerPhoneNumber');
+    if (!pickupAddress) missingFields.push('pickupAddress');
+    if (!itemCategory) missingFields.push('itemCategory');
+    if (!itemWeight) missingFields.push('itemWeight');
+    if (!estimatedEarnings) missingFields.push('estimatedEarnings');
+    if (!riderId) missingFields.push('riderId');
+
+    if (missingFields.length > 0) {
+      console.error('❌ Missing fields:', missingFields); // Debug log
+      console.error('❌ Received payload:', req.body); // Debug log
+
       return res.status(400).json({
         status: 'error',
-        message:
-          'Missing required fields: userId, itemId, customerName, customerPhoneNumber, pickupAddress, itemCategory, itemWeight, estimatedEarnings, riderId',
+        message: `Missing required fields: ${missingFields.join(', ')}`,
+        received: req.body, // ✅ Show what was received
       });
     }
-
     // Validate numeric fields
     const parsedUserId = parseInt(userId);
     const parsedItemId = parseInt(itemId);

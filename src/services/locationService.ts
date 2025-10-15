@@ -1,4 +1,4 @@
-import { database } from '../config/db.ts';
+import { database } from '../config/db';
 
 interface LocationData {
   lat: number;
@@ -21,8 +21,10 @@ export async function updateRiderLocation(
   location: LocationData,
 ): Promise<LocationUpdateResult> {
   try {
+    console.log(`🔄 Updating location for rider ${riderId}:`, location);
+
     // Validate location data
-    if (!location.lat || !location.lng) {
+    if (location.lat === undefined || location.lng === undefined) {
       throw new Error('Invalid location data: latitude and longitude are required');
     }
 
@@ -34,23 +36,30 @@ export async function updateRiderLocation(
       throw new Error('Invalid longitude: must be between -180 and 180');
     }
 
-    // Update location in Firebase
-    await database.ref(`riders/${riderId}`).set({
-      lat: location.lat.toString(),
-      lng: location.lng.toString(),
+    // Create location data with CURRENT timestamp
+    const locationData = {
+      lat: location.lat,
+      lng: location.lng,
       heading: location.heading || 0,
-      timestamp: location.timestamp || Date.now(),
+      timestamp: Date.now(), // Always use current timestamp
       lastUpdated: new Date().toISOString(),
-    });
+    };
 
-    console.log(`✅ Location updated for rider ${riderId}: (${location.lat}, ${location.lng})`);
+    console.log(`📝 Saving to Firebase:`, locationData);
+
+    // Update location in Firebase Realtime Database
+    await database.ref(`riders/${riderId}`).set(locationData);
+
+    console.log(
+      `✅ Location updated for rider ${riderId}: (${location.lat}, ${location.lng}) at ${locationData.timestamp}`,
+    );
 
     return {
       success: true,
       message: 'Location updated successfully',
     };
   } catch (error) {
-    console.error('Error updating rider location:', error);
+    console.error('❌ Error updating rider location:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to update location';
     return {
       success: false,
@@ -64,21 +73,26 @@ export async function updateRiderLocation(
  */
 export async function getRiderLocation(riderId: number): Promise<LocationData | null> {
   try {
-    const snapshot = await database.ref(`riders/${riderId}`).get();
+    console.log(`🔍 Fetching location for rider ${riderId}`);
+
+    const snapshot = await database.ref(`riders/${riderId}`).once('value');
 
     if (!snapshot.exists()) {
+      console.log(`❌ No location found for rider ${riderId}`);
       return null;
     }
 
     const data = snapshot.val();
+    console.log(`📍 Location data for rider ${riderId}:`, data);
+
     return {
-      lat: parseFloat(data.lat),
-      lng: parseFloat(data.lng),
+      lat: data.lat,
+      lng: data.lng,
       heading: data.heading || 0,
       timestamp: data.timestamp || Date.now(),
     };
   } catch (error) {
-    console.error('Error fetching rider location:', error);
+    console.error('❌ Error fetching rider location:', error);
     return null;
   }
 }
@@ -89,37 +103,17 @@ export async function getRiderLocation(riderId: number): Promise<LocationData | 
 export async function deleteRiderLocation(riderId: number): Promise<LocationUpdateResult> {
   try {
     await database.ref(`riders/${riderId}`).remove();
-
     console.log(`✅ Location removed for rider ${riderId}`);
-
     return {
       success: true,
       message: 'Location removed successfully',
     };
   } catch (error) {
-    console.error('Error removing rider location:', error);
+    console.error('❌ Error removing rider location:', error);
     const errorMessage = error instanceof Error ? error.message : 'Failed to remove location';
     return {
       success: false,
       error: errorMessage,
     };
   }
-}
-
-/**
- * Batch update - useful for getting multiple rider locations at once
- */
-export async function getMultipleRiderLocations(
-  riderIds: number[],
-): Promise<Map<number, LocationData>> {
-  const locations = new Map<number, LocationData>();
-
-  for (const riderId of riderIds) {
-    const location = await getRiderLocation(riderId);
-    if (location) {
-      locations.set(riderId, location);
-    }
-  }
-
-  return locations;
 }

@@ -8,6 +8,8 @@ import route from './src/routes/deliveryRoute.ts';
 import locationRoutes from './src/routes/locationRoute.ts';
 import pickupRoutes from './src/routes/pickupRoute.ts';
 import agentRoutes from './src/routes/agentRoute.ts';
+import authRoutes from './src/routes/authRoute.ts';
+
 import cron from 'node-cron';
 import https from 'https';
 import swaggerUi from 'swagger-ui-express';
@@ -69,6 +71,7 @@ app.use('/api/v1', route);
 app.use('/api/v1/pickups', pickupRoutes);
 app.use('/api/v1/location', locationRoutes);
 app.use('/api/v1/agents', agentRoutes);
+app.use('/api/v1', authRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

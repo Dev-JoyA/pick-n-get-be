@@ -1,32 +1,37 @@
-import express from "express"
-import {validateR, 
-    updateStatus, 
-    pickRide,
-    allPickUpByRider,
-    GetAllRiders,
-    GetRiderById,
-    UpdateRiderApproval,
-    RegisterRider
- } from "../controllers/deliveryController.ts"
-
+import express from 'express';
+import {
+  validateR,
+  updateStatus,
+  pickRide,
+  allPickUpByRider,
+  GetAllRiders,
+  GetRiderById,
+  UpdateRiderApproval,
+  RegisterRider,
+  CheckRiderRegistration,
+} from '../controllers/deliveryController.ts';
 
 const route = express.Router();
 
-route.post("/riders", RegisterRider);
+// Rider registration
+route.post('/riders', RegisterRider);
 
-route.post("/pick-ride/:user/:item", pickRide)
+// Check if rider is already registered (by ID or wallet address)
+route.get('/riders/check/:identifier', CheckRiderRegistration);
 
-route.post("/validate-ride/:rider/:pick-up-id", validateR)
+// Get all riders
+route.get('/riders', GetAllRiders);
 
-route.post("/update-status/:rider/:pick-up-id", updateStatus)
+// Get rider by ID
+route.get('/riders/:riderId', GetRiderById);
 
-route.get("/total-ride/:rider", allPickUpByRider)
+// Update rider approval status
+route.patch('/riders/:riderId/approval', UpdateRiderApproval);
 
-route.get("/riders", GetAllRiders);
-
-route.get("/riders/:riderId", GetRiderById);
-
-route.patch("/riders/:riderId/approval", UpdateRiderApproval);
-
+// Pickup routes
+route.post('/pick-ride/:user/:item', pickRide);
+route.post('/validate-ride/:rider/:pick-up-id', validateR);
+route.post('/update-status/:rider/:pick-up-id', updateStatus);
+route.get('/total-ride/:rider', allPickUpByRider);
 
 export default route;

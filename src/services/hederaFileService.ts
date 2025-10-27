@@ -43,12 +43,24 @@ function initializeHederaClient(config: HederaConfig): Client {
     client = Client.forMainnet();
   }
 
-  const operatorKey = PrivateKey.fromStringECDSA(config.operatorKey);
+  // Handle both hex string and PrivateKey object
+  let operatorKey: PrivateKey;
+
+  if (typeof config.operatorKey === 'string') {
+    // Remove '0x' prefix if present
+    const keyString = config.operatorKey.startsWith('0x')
+      ? config.operatorKey.slice(2)
+      : config.operatorKey;
+
+    operatorKey = PrivateKey.fromStringECDSA(keyString);
+  } else {
+    operatorKey = config.operatorKey as PrivateKey;
+  }
+
   client.setOperator(config.operatorId, operatorKey);
 
   return client;
 }
-
 /**
  * Get Hedera config from environment variables
  */

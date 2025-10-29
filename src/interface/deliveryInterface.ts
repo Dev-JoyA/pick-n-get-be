@@ -1,13 +1,13 @@
 import mongoose, { Document } from 'mongoose';
 import { v4 as uuidv4 } from 'uuid';
 
-// Re-export rider enums for backward compatibility
+// Re-export only enums and the model from riderModel
 export {
   RiderStatus,
   VehicleType,
   ApprovalStatus,
-  IRiderDetails,
   Rider,
+  type IRiderDetails, // Use 'type' keyword for interface
 } from '../models/riderModel';
 
 export enum PickUpStatus {

@@ -22,6 +22,8 @@ tags:
     description: Agent dashboard and pickup operations
   - name: Location
     description: Real-time location tracking
+  - name: Upload
+    description: Document upload endpoints using Hedera File Service
 
 components:
   schemas:
@@ -623,6 +625,123 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+
+  /api/v1/upload/document:
+    post:
+      tags:
+        - Upload
+      summary: Upload single document to Hedera File Service
+      description: Upload a single document (image or PDF) to Hedera File Service and receive a File ID
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: File to upload (max 10MB, allowed types - jpg, jpeg, png, pdf)
+      responses:
+        "200":
+          description: File uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: File uploaded successfully to Hedera File Service
+                  data:
+                    type: object
+                    properties:
+                      fileId:
+                        type: string
+                        example: "0.0.12345678"
+                      fileName:
+                        type: string
+                        example: drivers-license.pdf
+                      fileSize:
+                        type: number
+                        example: 524288
+                      mimeType:
+                        type: string
+                        example: application/pdf
+                      uploadedAt:
+                        type: string
+                        format: date-time
+        "400":
+          description: Bad request - no file or validation failed
+        "500":
+          description: Server error
+
+  /api/v1/upload/documents:
+    post:
+      tags:
+        - Upload
+      summary: Upload multiple documents to Hedera File Service
+      description: Upload multiple documents at once (max 10 files)
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                files:
+                  type: array
+                  items:
+                    type: string
+                    format: binary
+                  description: Multiple files to upload (max 10MB each)
+      responses:
+        "200":
+          description: Files uploaded successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: success
+                  message:
+                    type: string
+                    example: "Uploaded 4 of 4 files"
+                  data:
+                    type: object
+                    properties:
+                      uploaded:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            fileName:
+                              type: string
+                            fileId:
+                              type: string
+                            fileSize:
+                              type: number
+                            mimeType:
+                              type: string
+                      failed:
+                        type: array
+                        items:
+                          type: object
+                          properties:
+                            fileName:
+                              type: string
+                            error:
+                              type: string
+        "400":
+          description: Bad request - no files uploaded
+        "500":
+          description: Server error
 
   /api/v1/riders/{riderId}:
     get:

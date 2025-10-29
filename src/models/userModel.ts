@@ -3,6 +3,7 @@ import mongoose, { Document } from 'mongoose';
 export enum UserRole {
   Recycler = 'Recycler',
   Admin = 'Admin',
+  SuperAdmin = 'SuperAdmin',
 }
 
 export enum UserStatus {
@@ -17,17 +18,17 @@ export interface IUser extends Document {
   email?: string;
   phoneNumber: string;
   walletAddress?: string;
-  role: UserRole;
+  roles: UserRole[]; //Changed from 'role' to 'roles' array
   status: UserStatus;
   profileImage?: string;
   address?: string;
   country?: string;
 
   // Recycling stats
-  totalRecycled?: number; // Total kg recycled
-  totalEarnings?: number; // Total ECO tokens earned
-  co2Saved?: number; // Total CO2 saved in kg
-  totalPickups?: number; // Number of completed pickups
+  totalRecycled?: number;
+  totalEarnings?: number;
+  co2Saved?: number;
+  totalPickups?: number;
 
   // Timestamps
   createdAt?: Date;
@@ -48,7 +49,7 @@ const UserSchema = new mongoose.Schema<IUser>(
     email: {
       type: String,
       unique: true,
-      sparse: true, // Allows null values to be non-unique
+      sparse: true,
     },
     phoneNumber: {
       type: String,
@@ -60,10 +61,10 @@ const UserSchema = new mongoose.Schema<IUser>(
       unique: true,
       sparse: true,
     },
-    role: {
-      type: String,
+    roles: {
+      type: [String],
       enum: Object.values(UserRole),
-      default: UserRole.Recycler,
+      default: [UserRole.Recycler], //Array of roles
     },
     status: {
       type: String,

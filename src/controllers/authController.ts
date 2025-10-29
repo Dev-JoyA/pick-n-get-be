@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { Rider } from '../interface/deliveryInterface';
-import { User } from '../models/userModel';
+import { User, UserRole } from '../models/userModel';
 
 /**
  * Verify rider by phone number
@@ -116,7 +116,7 @@ export const verifyUserPhone = async (req: Request, res: Response) => {
         phoneNumber: user.phoneNumber,
         email: user.email,
         walletAddress: user.walletAddress,
-        role: user.role,
+        role: user.roles,
         status: user.status,
         totalRecycled: user.totalRecycled,
         totalEarnings: user.totalEarnings,
@@ -212,7 +212,7 @@ export const getUserById = async (req: Request, res: Response) => {
         email: user.email,
         phoneNumber: user.phoneNumber,
         walletAddress: user.walletAddress,
-        role: user.role,
+        role: user.roles,
         status: user.status,
         address: user.address,
         country: user.country,
@@ -229,6 +229,85 @@ export const getUserById = async (req: Request, res: Response) => {
     return res.status(500).json({
       status: 'error',
       message: error.message || 'Failed to get user',
+    });
+  }
+};
+
+/**
+ * Save user to backend after contract registration
+ * POST /api/v1/auth/save-user
+ * Body: { walletAddress, name, phoneNumber, homeAddress, profilePicture }
+ */
+export const saveUserFromContract = async (req: Request, res: Response) => {
+  try {
+    const { walletAddress, name, phoneNumber, homeAddress, profilePicture } = req.body;
+
+    if (!walletAddress) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Wallet address is required',
+      });
+    }
+
+    // Check if user already exists
+    let user = await User.findOne({ walletAddress });
+
+    if (user) {
+      // Update existing user
+      user.name = name || user.name;
+      user.phoneNumber = phoneNumber || user.phoneNumber;
+      user.address = homeAddress || user.address;
+      user.profileImage = profilePicture || user.profileImage;
+
+      // Ensure Recycler role exists
+      if (!user.roles.includes(UserRole.Recycler)) {
+        user.roles.push(UserRole.Recycler);
+      }
+
+      await user.save();
+
+      return res.status(200).json({
+        status: 'success',
+        message: 'User updated successfully',
+        data: {
+          userId: user.id,
+          walletAddress: user.walletAddress,
+          roles: user.roles,
+        },
+      });
+    }
+
+    // Create new user
+    const lastUser = await User.findOne().sort({ id: -1 }).limit(1);
+    const newUserId = lastUser ? lastUser.id + 1 : 1;
+
+    const newUser = await User.create({
+      id: newUserId,
+      name: name || `User_${newUserId}`,
+      phoneNumber: phoneNumber || '',
+      walletAddress,
+      address: homeAddress,
+      profileImage: profilePicture, // Hedera File ID
+      roles: [UserRole.Recycler],
+      status: 'Active',
+    });
+
+    console.log(`✅ User saved to backend: ${walletAddress}`);
+
+    return res.status(201).json({
+      status: 'success',
+      message: 'User created successfully',
+      data: {
+        userId: newUser.id,
+        walletAddress: newUser.walletAddress,
+        roles: newUser.roles,
+      },
+    });
+  } catch (error: any) {
+    console.error('Save user error:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: error.message || 'Failed to save user',
     });
   }
 };

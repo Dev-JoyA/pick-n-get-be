@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { Rider } from '../interface/deliveryInterface';
 import { User, UserRole } from '../models/userModel';
+import { checkWalletRoles } from '../services/authService';
 
 /**
  * Verify rider by phone number
@@ -308,6 +309,36 @@ export const saveUserFromContract = async (req: Request, res: Response) => {
     return res.status(500).json({
       status: 'error',
       message: error.message || 'Failed to save user',
+    });
+  }
+};
+
+/**
+ * Check wallet roles for authentication
+ * POST /api/v1/auth/check-wallet
+ */
+export const checkWalletAuth = async (req: Request, res: Response) => {
+  try {
+    const { walletAddress } = req.body;
+
+    if (!walletAddress) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Wallet address is required',
+      });
+    }
+
+    const roleInfo = await checkWalletRoles(walletAddress);
+
+    return res.status(200).json({
+      status: 'success',
+      data: roleInfo,
+    });
+  } catch (error: any) {
+    console.error('Error checking wallet roles:', error);
+    return res.status(500).json({
+      status: 'error',
+      message: error.message || 'Failed to check wallet roles',
     });
   }
 };

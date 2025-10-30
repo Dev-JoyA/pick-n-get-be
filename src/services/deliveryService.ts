@@ -468,18 +468,25 @@ export const updateRiderApproval = async (riderId: number, action: 'approve' | '
       };
     }
 
-    let newStatus: ApprovalStatus;
+    // ✅ FIX: Use string values to match database
+    let newStatus: string;
     if (action === 'approve') {
-      newStatus = ApprovalStatus.Approve;
+      newStatus = 'Approved'; // ✅ Changed from ApprovalStatus.Approve
     } else {
-      newStatus = ApprovalStatus.Reject;
+      newStatus = 'Rejected'; // ✅ Changed from ApprovalStatus.Reject
     }
+
+    console.log(
+      `🔄 Updating rider ${riderId} approval status from ${rider.approvalStatus} to ${newStatus}`,
+    );
 
     const updatedRider = await Rider.findOneAndUpdate(
       { id: riderId },
       { approvalStatus: newStatus },
       { new: true },
     );
+
+    console.log(`✅ Rider approval updated successfully: ${updatedRider!.approvalStatus}`);
 
     return {
       status: 'success',
@@ -493,6 +500,89 @@ export const updateRiderApproval = async (riderId: number, action: 'approve' | '
       },
     };
   } catch (error: any) {
+    console.error(`❌ Error updating rider approval:`, error);
+    return {
+      status: 'error',
+      message: error.message,
+    };
+  }
+};
+
+export const getPendingRiders = async () => {
+  try {
+    const pendingRiders = await Rider.find({
+      approvalStatus: 'Pending',
+    }).sort({ createdAt: -1 });
+
+    const ridersData = pendingRiders.map((rider) => ({
+      riderId: rider.id,
+      name: rider.name,
+      phoneNumber: rider.phoneNumber,
+      vehicleNumber: rider.vehicleNumber,
+      vehicleType: rider.vehicleType,
+      country: rider.country,
+      capacity: rider.capacity,
+      homeAddress: rider.homeAddress,
+      walletAddress: rider.walletAddress,
+      approvalStatus: rider.approvalStatus,
+      riderStatus: rider.riderStatus,
+      submissionDate: rider.createdAt,
+      vehicleMakeModel: rider.vehicleMakeModel,
+      vehiclePlateNumber: rider.vehiclePlateNumber,
+      vehicleColor: rider.vehicleColor,
+      documents: {
+        profileImage: rider.profileImage,
+        driversLicense: rider.driversLicense,
+        vehicleRegistration: rider.vehicleRegistration,
+        insuranceCertificate: rider.insuranceCertificate,
+        vehiclePhotos: rider.vehiclePhotos,
+      },
+    }));
+
+    return {
+      status: 'success',
+      message: `Found ${ridersData.length} pending riders`,
+      data: {
+        count: ridersData.length,
+        riders: ridersData,
+      },
+    };
+  } catch (error: any) {
+    console.error('❌ Error getting pending riders:', error);
+    return {
+      status: 'error',
+      message: error.message,
+    };
+  }
+};
+
+export const updateRiderDetails = async (riderId: number, updates: any) => {
+  try {
+    const rider = await Rider.findOne({ id: riderId });
+
+    if (!rider) {
+      return {
+        status: 'error',
+        message: 'Rider not found',
+      };
+    }
+
+    const updatedRider = await Rider.findOneAndUpdate({ id: riderId }, updates, { new: true });
+
+    return {
+      status: 'success',
+      message: 'Rider updated successfully',
+      data: {
+        riderId: updatedRider!.id,
+        name: updatedRider!.name,
+        capacity: updatedRider!.capacity,
+        vehicleType: updatedRider!.vehicleType,
+        approvalStatus: updatedRider!.approvalStatus,
+        riderStatus: updatedRider!.riderStatus,
+      },
+    };
+  } catch (error: any) {
+    console.error('❌ Error updating rider:', error);
     return {
       status: 'error',
       message: error.message,

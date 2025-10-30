@@ -24,6 +24,8 @@ tags:
     description: Real-time location tracking
   - name: Upload
     description: Document upload endpoints using Hedera File Service
+  - name: Admin
+    description: Admin dashboard and management endpoints
 
 components:
   schemas:
@@ -326,6 +328,156 @@ components:
           type: string
           format: date-time
           example: "2025-01-15T10:35:00Z"
+
+    DashboardStats:
+      type: object
+      properties:
+        totalUsers:
+          type: number
+          example: 1245
+        activeUsers:
+          type: number
+          example: 980
+        totalRiders:
+          type: number
+          example: 156
+        activeAgents:
+          type: number
+          example: 89
+        verifiedVendors:
+          type: number
+          example: 45
+        pendingApprovals:
+          type: number
+          example: 12
+        platformRevenue:
+          type: string
+          example: "$45,230"
+        totalEarnings:
+          type: number
+          example: 45230
+        userGrowthRate:
+          type: string
+          example: "+12.5%"
+        pickupGrowthRate:
+          type: string
+          example: "+8.3%"
+        approvedToday:
+          type: number
+          example: 5
+        rejectedToday:
+          type: number
+          example: 1
+        systemUptime:
+          type: string
+          example: "99.8%"
+        transactionSuccessRate:
+          type: string
+          example: "96.2%"
+
+    UserStats:
+      type: object
+      properties:
+        total:
+          type: number
+          example: 1245
+        byStatus:
+          type: object
+          properties:
+            active:
+              type: number
+              example: 980
+            inactive:
+              type: number
+              example: 200
+            suspended:
+              type: number
+              example: 5
+        byRole:
+          type: object
+          properties:
+            recyclers:
+              type: number
+              example: 1200
+            admins:
+              type: number
+              example: 3
+            superAdmins:
+              type: number
+              example: 1
+
+    RiderStats:
+      type: object
+      properties:
+        total:
+          type: number
+          example: 156
+        byStatus:
+          type: object
+          properties:
+            pending:
+              type: number
+              example: 12
+            approved:
+              type: number
+              example: 120
+            rejected:
+              type: number
+              example: 24
+        byVehicleType:
+          type: object
+          properties:
+            Car:
+              type: number
+              example: 80
+            Bike:
+              type: number
+              example: 50
+            Van:
+              type: number
+              example: 20
+            Truck:
+              type: number
+              example: 6
+
+    RecentActivity:
+      type: object
+      properties:
+        type:
+          type: string
+          example: "user_registration"
+        message:
+          type: string
+          example: "New user registered: John Doe"
+        timestamp:
+          type: string
+          format: date-time
+        details:
+          type: object
+
+    SystemAlert:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "high_pending_riders"
+        type:
+          type: string
+          enum: [error, warning, info]
+          example: "warning"
+        title:
+          type: string
+          example: "High Pending Approvals"
+        message:
+          type: string
+          example: "12 riders awaiting approval"
+        timestamp:
+          type: string
+          format: date-time
+        priority:
+          type: string
+          enum: [low, medium, high]
+          example: "medium"
 
     Error:
       type: object
@@ -1681,3 +1833,392 @@ paths:
                   message:
                     type: string
                     example: "Location removed successfully"
+
+  /api/v1/admin/stats/dashboard:
+    get:
+      tags:
+        - Admin
+      summary: Get dashboard statistics
+      description: Retrieve overall dashboard statistics including users, riders, revenue, and growth metrics
+      responses:
+        "200":
+          description: Dashboard statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Dashboard statistics fetched successfully"
+                  data:
+                    $ref: "#/components/schemas/DashboardStats"
+        "500":
+          description: Internal server error
+
+/api/v1/admin/stats/users:
+  get:
+    tags:
+      - Admin
+    summary: Get detailed user statistics
+    description: Retrieve detailed user statistics broken down by status and role
+    responses:
+      "200":
+        description: User statistics retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: "success"
+                message:
+                  type: string
+                  example: "User statistics fetched successfully"
+                data:
+                  $ref: "#/components/schemas/UserStats"
+      "500":
+        description: Internal server error
+
+/api/v1/admin/stats/riders:
+  get:
+    tags:
+      - Admin
+    summary: Get detailed rider statistics
+    description: Retrieve detailed rider statistics broken down by status and vehicle type
+    responses:
+      "200":
+        description: Rider statistics retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: "success"
+                message:
+                  type: string
+                  example: "Rider statistics fetched successfully"
+                data:
+                  $ref: "#/components/schemas/RiderStats"
+      "500":
+        description: Internal server error
+
+  /api/v1/admin/activity/recent:
+    get:
+      tags:
+        - Admin
+      summary: Get recent platform activity
+      description: Retrieve recent platform activity including registrations, approvals, and pickups
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 50
+            default: 10
+          description: Maximum number of activities to return
+      responses:
+        "200":
+          description: Recent activity retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Recent activity fetched successfully"
+                  data:
+                    type: object
+                    properties:
+                      activities:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/RecentActivity"
+                      summary:
+                        type: object
+                        properties:
+                          newUsers:
+                            type: number
+                            example: 5
+                          newRiders:
+                            type: number
+                            example: 3
+                          newPickups:
+                            type: number
+                            example: 12
+                          newApprovals:
+                            type: number
+                            example: 2
+        "500":
+          description: Internal server error
+
+/api/v1/admin/alerts/system:
+  get:
+    tags:
+      - Admin
+    summary: Get system alerts
+    description: Retrieve system health alerts and notifications
+    responses:
+      "200":
+        description: System alerts retrieved successfully
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                status:
+                  type: string
+                  example: "success"
+                message:
+                  type: string
+                  example: "System alerts fetched successfully"
+                data:
+                  type: object
+                  properties:
+                    alerts:
+                      type: array
+                      items:
+                        $ref: "#/components/schemas/SystemAlert"
+                    alertCount:
+                      type: number
+                      example: 3
+                    systemHealth:
+                      type: string
+                      enum: [healthy, warning, critical]
+                      example: "warning"
+      "500":
+        description: Internal server error
+
+  /api/v1/admin/auth/check-wallet:
+    post:
+      tags:
+        - Admin
+      summary: Check wallet authentication
+      description: Verify admin wallet credentials and get role information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - walletAddress
+              properties:
+                walletAddress:
+                  type: string
+                  example: "0x1234567890abcdef1234567890abcdef12345678"
+      responses:
+        "200":
+          description: Wallet authentication checked successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+                    properties:
+                      walletAddress:
+                        type: string
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                        example: ["Admin", "SuperAdmin"]
+                      primaryRole:
+                        type: string
+                        example: "Admin"
+                      userData:
+                        type: object
+                        nullable: true
+                      riderData:
+                        type: object
+                        nullable: true
+        "400":
+          description: Invalid wallet address
+        "404":
+          description: Wallet not found or not authorized
+        "500":
+          description: Internal server error
+
+  /api/v1/admin/riders/pending:
+    get:
+      tags:
+        - Admin
+      summary: Get pending rider approvals
+      description: Retrieve all riders pending approval with their documents
+      responses:
+        "200":
+          description: Pending riders retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Found 5 pending riders"
+                  data:
+                    type: object
+                    properties:
+                      count:
+                        type: number
+                        example: 5
+                      riders:
+                        type: array
+                        items:
+                          $ref: "#/components/schemas/Rider"
+        "500":
+          description: Internal server error
+
+  /api/v1/admin/riders/{riderId}:
+    get:
+      tags:
+        - Admin
+      summary: Get rider details for admin
+      description: Get detailed rider information including documents for admin review
+      parameters:
+        - in: path
+          name: riderId
+          required: true
+          schema:
+            type: number
+          example: 123
+      responses:
+        "200":
+          description: Rider details retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  data:
+                    $ref: "#/components/schemas/Rider"
+        "404":
+          description: Rider not found
+        "500":
+          description: Internal server error
+
+    patch:
+      tags:
+        - Admin
+      summary: Update rider details (Admin)
+      description: Update rider information (admin only)
+      parameters:
+        - in: path
+          name: riderId
+          required: true
+          schema:
+            type: number
+          example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Updated Name"
+                phoneNumber:
+                  type: string
+                  example: "+1234567890"
+                vehicleNumber:
+                  type: string
+                  example: "NEW-123-XY"
+                homeAddress:
+                  type: string
+                  example: "Updated address"
+                riderStatus:
+                  type: string
+                  enum: [Available, Off-line, On-Trip]
+                  example: "Available"
+      responses:
+        "200":
+          description: Rider updated successfully
+        "404":
+          description: Rider not found
+        "500":
+          description: Internal server error
+
+  /api/v1/admin/riders/{riderId}/approval:
+    patch:
+      tags:
+        - Admin
+      summary: Update rider approval status
+      description: Approve or reject a rider application
+      parameters:
+        - in: path
+          name: riderId
+          required: true
+          schema:
+            type: number
+          example: 123
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - status
+              properties:
+                status:
+                  type: string
+                  enum: [approve, reject]
+                  example: "approve"
+                reason:
+                  type: string
+                  example: "Documents verified successfully"
+                  description: "Required for rejection"
+      responses:
+        "200":
+          description: Approval status updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Rider approved successfully"
+                  data:
+                    type: object
+                    properties:
+                      riderId:
+                        type: number
+                        example: 123
+                      name:
+                        type: string
+                        example: "John Doe"
+                      approvalStatus:
+                        type: string
+                        example: "Approved"
+        "404":
+          description: Rider not found
+        "500":
+          description: Internal server error

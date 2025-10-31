@@ -1859,7 +1859,7 @@ paths:
         "500":
           description: Internal server error
 
-/api/v1/admin/stats/users:
+  /api/v1/admin/stats/users:
   get:
     tags:
       - Admin
@@ -1884,8 +1884,8 @@ paths:
       "500":
         description: Internal server error
 
-/api/v1/admin/stats/riders:
-  get:
+  /api/v1/admin/stats/riders:
+    get:
     tags:
       - Admin
     summary: Get detailed rider statistics
@@ -1963,8 +1963,8 @@ paths:
         "500":
           description: Internal server error
 
-/api/v1/admin/alerts/system:
-  get:
+  /api/v1/admin/alerts/system:
+    get:
     tags:
       - Admin
     summary: Get system alerts

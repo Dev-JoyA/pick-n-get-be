@@ -35,7 +35,7 @@ export const RegisterRider = async (req: Request, res: Response) => {
       vehiclePlateNumber,
       vehicleColor,
 
-      // IPFS CIDs from frontend
+      // HFS ID from frontend
       profileImage,
       driversLicense,
       vehicleRegistration,

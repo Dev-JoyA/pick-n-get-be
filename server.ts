@@ -10,6 +10,7 @@ import pickupRoutes from './src/routes/pickupRoute.ts';
 import agentRoutes from './src/routes/agentRoute.ts';
 import authRoutes from './src/routes/authRoute.ts';
 import uploadRoutes from './src/routes/uploadRoute.ts';
+import adminRoutes from './src/routes/adminRoutes';
 
 import cron from 'node-cron';
 import https from 'https';
@@ -72,8 +73,9 @@ app.use('/api/v1', route);
 app.use('/api/v1/pickups', pickupRoutes);
 app.use('/api/v1/location', locationRoutes);
 app.use('/api/v1/agents', agentRoutes);
-app.use('/api/v1', authRoutes);
 app.use('/api/v1/upload', uploadRoutes); // Upload routes for Hedera File Service
+app.use('/api/v1/auth', authRoutes); //auth routes
+app.use('/api/v1/admin', adminRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

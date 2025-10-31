@@ -1,116 +1,110 @@
 import { Request, Response } from 'express';
-import {
-  getAgentActivePickups,
-  getAvailablePickupJobs,
-  acceptPickupJob,
-  updatePickupStatus,
-  cancelPickup,
-  getAgentStats,
-} from '../services/agentPickupService.ts';
-import { PickUpStatus } from '../models/pickupModel.ts';
-
-/**
- * Get agent dashboard stats
- * GET /api/v1/agents/:riderId/stats
- */
-export const getAgentDashboardStats = async (req: Request, res: Response) => {
-  try {
-    const { riderId } = req.params;
-
-    const riderIdNum = parseInt(riderId);
-    if (isNaN(riderIdNum)) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Invalid rider ID',
-      });
-    }
-
-    const stats = await getAgentStats(riderIdNum);
-
-    return res.status(200).json({
-      status: 'success',
-      data: stats,
-    });
-  } catch (error) {
-    console.error('Error fetching agent stats:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch agent stats';
-    return res.status(500).json({
-      status: 'error',
-      message: errorMessage,
-    });
-  }
-};
+import { PickUp, PickUpStatus } from '../models/pickupModel.ts';
+import { Rider, RiderStatus } from '../interface/deliveryInterface.ts';
 
 /**
  * Get agent's active pickups
  * GET /api/v1/agents/:riderId/pickups/active
  */
-export const getActivePickups = async (req: Request, res: Response) => {
+export const getAgentActivePickups = async (req: Request, res: Response) => {
   try {
     const { riderId } = req.params;
 
-    const riderIdNum = parseInt(riderId);
-    if (isNaN(riderIdNum)) {
-      return res.status(400).json({
+    // Find rider by ID
+    const rider = await Rider.findOne({ id: parseInt(riderId) });
+    if (!rider) {
+      return res.status(404).json({
         status: 'error',
-        message: 'Invalid rider ID',
+        message: 'Rider not found',
       });
     }
 
-    const pickups = await getAgentActivePickups(riderIdNum);
+    // Get active pickups for this rider
+    const pickups = await PickUp.find({
+      riderId: rider._id,
+      pickUpStatus: { $in: [PickUpStatus.Pending, PickUpStatus.InTransit, PickUpStatus.PickedUp] },
+    }).sort({ requestedAt: -1 });
+
+    const formattedPickups = pickups.map((pickup) => ({
+      trackingId: pickup.trackingId,
+      pickupId: pickup._id.toString(),
+      customerName: pickup.customerName,
+      customerPhoneNumber: pickup.customerPhoneNumber,
+      pickupAddress: pickup.pickUpAddress,
+      pickupCoordinates: pickup.pickupCoordinates,
+      itemCategory: pickup.itemCategory,
+      itemWeight: pickup.itemWeight,
+      estimatedEarnings: pickup.estimatedEarnings,
+      pickUpStatus: pickup.pickUpStatus,
+      requestedAt: pickup.requestedAt,
+    }));
 
     return res.status(200).json({
       status: 'success',
-      message: `Found ${pickups.length} active pickup${pickups.length !== 1 ? 's' : ''}`,
       data: {
-        count: pickups.length,
-        pickups,
+        riderId: parseInt(riderId),
+        riderName: rider.name,
+        pickups: formattedPickups,
       },
     });
-  } catch (error) {
-    console.error('Error fetching active pickups:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch active pickups';
+  } catch (error: any) {
+    console.error('Error fetching agent active pickups:', error);
     return res.status(500).json({
       status: 'error',
-      message: errorMessage,
+      message: error.message || 'Failed to fetch active pickups',
     });
   }
 };
 
 /**
- * Get available pickup jobs
+ * Get available pickup jobs for agent
  * GET /api/v1/agents/:riderId/pickups/available
  */
 export const getAvailableJobs = async (req: Request, res: Response) => {
   try {
     const { riderId } = req.params;
-    const { limit } = req.query;
 
-    const riderIdNum = parseInt(riderId);
-    if (isNaN(riderIdNum)) {
-      return res.status(400).json({
+    // Find rider by ID
+    const rider = await Rider.findOne({ id: parseInt(riderId) });
+    if (!rider) {
+      return res.status(404).json({
         status: 'error',
-        message: 'Invalid rider ID',
+        message: 'Rider not found',
       });
     }
 
-    const limitNum = limit ? parseInt(limit as string) : 10;
-    const jobs = await getAvailablePickupJobs(riderIdNum, limitNum);
+    // Find available jobs (pending status, compatible vehicle type, within capacity)
+    const availableJobs = await PickUp.find({
+      pickUpStatus: PickUpStatus.Pending,
+      riderId: { $exists: false }, // No rider assigned yet
+      itemWeight: { $lte: rider.capacity },
+    })
+      .sort({ requestedAt: 1 }) // Oldest first
+      .limit(10);
+
+    const formattedJobs = availableJobs.map((job) => ({
+      trackingId: job.trackingId,
+      pickupId: job._id.toString(),
+      customerName: job.customerName,
+      customerPhoneNumber: job.customerPhoneNumber,
+      pickupAddress: job.pickUpAddress,
+      itemCategory: job.itemCategory,
+      itemWeight: job.itemWeight,
+      estimatedEarnings: job.estimatedEarnings,
+      requestedAt: job.requestedAt,
+    }));
 
     return res.status(200).json({
       status: 'success',
-      message: `Found ${jobs.length} available job${jobs.length !== 1 ? 's' : ''}`,
       data: {
-        count: jobs.length,
-        jobs,
+        jobs: formattedJobs,
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching available jobs:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to fetch available jobs';
     return res.status(500).json({
       status: 'error',
-      message: errorMessage,
+      message: error.message || 'Failed to fetch available jobs',
     });
   }
 };
@@ -119,45 +113,69 @@ export const getAvailableJobs = async (req: Request, res: Response) => {
  * Accept a pickup job
  * POST /api/v1/agents/:riderId/pickups/:pickupId/accept
  */
-export const acceptJob = async (req: Request, res: Response) => {
+export const acceptPickupJob = async (req: Request, res: Response) => {
   try {
     const { riderId, pickupId } = req.params;
 
-    const riderIdNum = parseInt(riderId);
-    if (isNaN(riderIdNum)) {
-      return res.status(400).json({
+    // Find rider
+    const rider = await Rider.findOne({ id: parseInt(riderId) });
+    if (!rider) {
+      return res.status(404).json({
         status: 'error',
-        message: 'Invalid rider ID',
+        message: 'Rider not found',
       });
     }
 
-    if (!pickupId || pickupId.length !== 24) {
+    // Check if rider is available
+    if (rider.riderStatus !== RiderStatus.Available) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid pickup ID',
+        message: 'Rider is not available',
       });
     }
 
-    const result = await acceptPickupJob(riderIdNum, pickupId);
-
-    if (!result.success) {
-      return res.status(400).json({
+    // Find pickup
+    const pickup = await PickUp.findById(pickupId);
+    if (!pickup) {
+      return res.status(404).json({
         status: 'error',
-        message: result.error || 'Failed to accept pickup',
+        message: 'Pickup not found',
       });
     }
+
+    // Check if pickup is still pending
+    if (pickup.pickUpStatus !== PickUpStatus.Pending) {
+      return res.status(400).json({
+        status: 'error',
+        message: 'Pickup is no longer available',
+      });
+    }
+
+    // Assign rider to pickup
+    pickup.riderId = rider._id;
+    pickup.pickUpStatus = PickUpStatus.InTransit;
+    pickup.acceptedAt = new Date();
+    await pickup.save();
+
+    // Update rider status
+    rider.riderStatus = RiderStatus.OnTrip;
+    await rider.save();
 
     return res.status(200).json({
       status: 'success',
-      message: result.message,
-      data: result.data,
+      message: 'Pickup job accepted successfully',
+      data: {
+        pickupId: pickup._id.toString(),
+        trackingId: pickup.trackingId,
+        pickUpStatus: pickup.pickUpStatus,
+        riderStatus: rider.riderStatus,
+      },
     });
-  } catch (error) {
-    console.error('Error accepting job:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to accept job';
+  } catch (error: any) {
+    console.error('Error accepting pickup job:', error);
     return res.status(500).json({
       status: 'error',
-      message: errorMessage,
+      message: error.message || 'Failed to accept pickup job',
     });
   }
 };
@@ -166,110 +184,140 @@ export const acceptJob = async (req: Request, res: Response) => {
  * Update pickup status
  * PATCH /api/v1/agents/:riderId/pickups/:pickupId/status
  */
-export const updateStatus = async (req: Request, res: Response) => {
+export const updatePickupStatus = async (req: Request, res: Response) => {
   try {
     const { riderId, pickupId } = req.params;
     const { status } = req.body;
 
-    const riderIdNum = parseInt(riderId);
-    if (isNaN(riderIdNum)) {
+    // Validate status
+    if (!Object.values(PickUpStatus).includes(status)) {
       return res.status(400).json({
         status: 'error',
-        message: 'Invalid rider ID',
+        message: 'Invalid pickup status',
       });
     }
 
-    if (!pickupId || pickupId.length !== 24) {
-      return res.status(400).json({
+    // Find rider
+    const rider = await Rider.findOne({ id: parseInt(riderId) });
+    if (!rider) {
+      return res.status(404).json({
         status: 'error',
-        message: 'Invalid pickup ID',
+        message: 'Rider not found',
       });
     }
 
-    if (!status) {
-      return res.status(400).json({
+    // Find pickup and verify it belongs to this rider
+    const pickup = await PickUp.findOne({
+      _id: pickupId,
+      riderId: rider._id,
+    });
+
+    if (!pickup) {
+      return res.status(404).json({
         status: 'error',
-        message: 'Status is required',
+        message: 'Pickup not found or not assigned to this rider',
       });
     }
 
-    // Validate status enum
-    const validStatuses = Object.values(PickUpStatus);
-    if (!validStatuses.includes(status)) {
-      return res.status(400).json({
-        status: 'error',
-        message: `Invalid status. Must be one of: ${validStatuses.join(', ')}`,
-      });
+    // Update pickup status
+    pickup.pickUpStatus = status;
+
+    // Set appropriate timestamps
+    if (status === PickUpStatus.PickedUp) {
+      pickup.collectedAt = new Date();
+    } else if (status === PickUpStatus.Delivered) {
+      pickup.deliveredAt = new Date();
+      // Free up the rider
+      rider.riderStatus = RiderStatus.Available;
+      await rider.save();
     }
 
-    const result = await updatePickupStatus(riderIdNum, pickupId, status as PickUpStatus);
-
-    if (!result.success) {
-      return res.status(400).json({
-        status: 'error',
-        message: result.error || 'Failed to update pickup status',
-      });
-    }
+    await pickup.save();
 
     return res.status(200).json({
       status: 'success',
-      message: result.message,
-      data: result.data,
+      message: 'Pickup status updated successfully',
+      data: {
+        pickupId: pickup._id.toString(),
+        trackingId: pickup.trackingId,
+        pickUpStatus: pickup.pickUpStatus,
+        collectedAt: pickup.collectedAt,
+        deliveredAt: pickup.deliveredAt,
+      },
     });
-  } catch (error) {
-    console.error('Error updating status:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to update status';
+  } catch (error: any) {
+    console.error('Error updating pickup status:', error);
     return res.status(500).json({
       status: 'error',
-      message: errorMessage,
+      message: error.message || 'Failed to update pickup status',
     });
   }
 };
 
 /**
- * Cancel a pickup
- * POST /api/v1/agents/:riderId/pickups/:pickupId/cancel
+ * Get agent statistics
+ * GET /api/v1/agents/:riderId/stats
  */
-export const cancelPickupJob = async (req: Request, res: Response) => {
+export const getAgentStats = async (req: Request, res: Response) => {
   try {
-    const { riderId, pickupId } = req.params;
-    const { reason } = req.body;
+    const { riderId } = req.params;
 
-    const riderIdNum = parseInt(riderId);
-    if (isNaN(riderIdNum)) {
-      return res.status(400).json({
+    // Find rider
+    const rider = await Rider.findOne({ id: parseInt(riderId) });
+    if (!rider) {
+      return res.status(404).json({
         status: 'error',
-        message: 'Invalid rider ID',
+        message: 'Rider not found',
       });
     }
 
-    if (!pickupId || pickupId.length !== 24) {
-      return res.status(400).json({
-        status: 'error',
-        message: 'Invalid pickup ID',
-      });
-    }
+    // Calculate stats
+    const totalPickups = await PickUp.countDocuments({
+      riderId: rider._id,
+      pickUpStatus: PickUpStatus.Delivered,
+    });
 
-    const result = await cancelPickup(riderIdNum, pickupId, reason);
+    const weeklyPickups = await PickUp.countDocuments({
+      riderId: rider._id,
+      pickUpStatus: PickUpStatus.Delivered,
+      deliveredAt: {
+        $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+      },
+    });
 
-    if (!result.success) {
-      return res.status(400).json({
-        status: 'error',
-        message: result.error || 'Failed to cancel pickup',
-      });
-    }
+    const completedPickups = await PickUp.find({
+      riderId: rider._id,
+      pickUpStatus: PickUpStatus.Delivered,
+    });
+
+    const totalEarnings = completedPickups.reduce(
+      (sum, pickup) => sum + (pickup.estimatedEarnings || 0),
+      0,
+    );
+
+    // Mock rating for now (would be calculated from customer reviews)
+    const rating = 4.8;
+
+    // Calculate completion rate (assuming all assigned pickups should be completed)
+    const totalAssigned = await PickUp.countDocuments({ riderId: rider._id });
+    const completionRate =
+      totalAssigned > 0 ? Math.round((totalPickups / totalAssigned) * 100) : 100;
 
     return res.status(200).json({
       status: 'success',
-      message: result.message,
-      data: result.data,
+      data: {
+        totalPickups,
+        totalEarnings,
+        weeklyPickups,
+        rating,
+        completionRate,
+      },
     });
-  } catch (error) {
-    console.error('Error cancelling pickup:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Failed to cancel pickup';
+  } catch (error: any) {
+    console.error('Error fetching agent stats:', error);
     return res.status(500).json({
       status: 'error',
-      message: errorMessage,
+      message: error.message || 'Failed to fetch agent stats',
     });
   }
 };

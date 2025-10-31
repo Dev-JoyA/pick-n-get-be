@@ -3,7 +3,7 @@
 
 **Backend Services for Waste Management & Rider Operations**
 
-## 🚀 Quick Start
+## 🚀Quick Start
 
 ### Prerequisites
 

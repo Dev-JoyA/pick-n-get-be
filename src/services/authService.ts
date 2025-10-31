@@ -1,5 +1,5 @@
-import { User, UserRole } from '../models/userModel';
-import { Rider, ApprovalStatus } from '../interface/deliveryInterface';
+import { User, UserRole } from '../models/userModel.js';
+import { Rider, ApprovalStatus } from '../interface/deliveryInterface.js';
 
 const SUPER_ADMIN_WALLET = process.env.SUPER_ADMIN_WALLET || '';
 

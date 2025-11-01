@@ -1,5 +1,6 @@
 import { User, UserRole } from '../models/userModel';
 import { Rider, ApprovalStatus } from '../interface/deliveryInterface';
+import { Producer } from '../models/productModel';
 
 const SUPER_ADMIN_WALLET = process.env.SUPER_ADMIN_WALLET || '';
 

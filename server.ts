@@ -12,6 +12,7 @@ import authRoutes from './src/routes/authRoute.ts';
 import deliveryRoutes from './src/routes/deliveryRoute.ts';
 import uploadRoutes from './src/routes/uploadRoute.ts';
 import adminRoutes from './src/routes/adminRoutes';
+import productRoutes from './src/routes/productRoute.ts';
 
 import cron from 'node-cron';
 import https from 'https';
@@ -78,6 +79,7 @@ app.use('/api/v1/upload', uploadRoutes); // Upload routes for Hedera File Servic
 app.use('/api/v1/delivery', deliveryRoutes);
 app.use('/api/v1/auth', authRoutes); //auth routes
 app.use('/api/v1/admin', adminRoutes);
+app.use('/api/v1/products', productRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {

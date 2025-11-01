@@ -185,8 +185,7 @@ export const addProduct = async (req: Request, res: Response) => {
     const calculatedPriceUSD = priceUSD || hbarToUsd(price);
 
     // Generate image URL
-    const imageUrl = `https://hashscan.io/testnet/file/${imageFileId}`;
-
+    const imageUrl = `https://testnet.mirrornode.hedera.com/api/v1/contracts/${imageFileId}/results/contents`;
     // Create product
     const newProduct = await Product.create({
       productId,

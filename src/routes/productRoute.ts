@@ -11,6 +11,7 @@ import {
   convertUsdToHbar,
   updateProductStatus,
   recordProductSale,
+  fixImageUrls,
 } from '../controllers/productController';
 
 const router = express.Router();
@@ -33,5 +34,6 @@ router.get('/vendors/:walletAddress/orders', getVendorOrders);
 // Currency Conversion
 router.get('/conversion/hbar-to-usd', getConversionRate);
 router.post('/conversion/usd-to-hbar', convertUsdToHbar);
+router.post('/fix-image-urls', fixImageUrls);
 
 export default router;

@@ -185,7 +185,12 @@ export const addProduct = async (req: Request, res: Response) => {
     const calculatedPriceUSD = priceUSD || hbarToUsd(price);
 
     // Generate image URL
-    const imageUrl = `https://testnet.mirrornode.hedera.com/api/v1/contracts/${imageFileId}/results/contents`;
+    // const imageUrl = `https://testnet.mirrornode.hedera.com/api/v1/contracts/${imageFileId}/results/contents`;
+
+    // Generate image URL - FIXED VERSION
+    const imageUrl = imageFileId.startsWith('0.0.')
+      ? `https://hashscan.io/testnet/file/${imageFileId}`
+      : imageFileId;
     // Create product
     const newProduct = await Product.create({
       productId,
@@ -635,6 +640,43 @@ export const recordProductSale = async (req: Request, res: Response) => {
     return res.status(500).json({
       status: 'error',
       message: error.message || 'Failed to record sale',
+    });
+  }
+};
+
+/**
+ * Fix image URLs for all products (run once)
+ * POST /api/v1/products/fix-image-urls
+ */ export const fixImageUrls = async (req: Request, res: Response) => {
+  try {
+    const products = await Product.find({});
+    let updated = 0;
+
+    for (const product of products) {
+      if (product.imageFileId) {
+        // ✅ CORRECT FORMAT
+        const newImageUrl = product.imageFileId.startsWith('0.0.')
+          ? `https://hashscan.io/testnet/file/${product.imageFileId}`
+          : product.imageFileId;
+
+        if (product.imageUrl !== newImageUrl) {
+          product.imageUrl = newImageUrl;
+          await product.save();
+          updated++;
+        }
+      }
+    }
+
+    return res.status(200).json({
+      status: 'success',
+      message: `Updated ${updated} product image URLs`,
+    });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Failed to fix image URLs';
+    console.error('Error fixing image URLs:', error);
+    return res.status(500).json({
+      status: 'error',
+      message,
     });
   }
 };

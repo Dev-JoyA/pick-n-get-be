@@ -143,7 +143,7 @@ function keepAlive(url: string) {
     });
 }
 
-cron.schedule('*/14 * * * *', () => {
-  keepAlive('https://pick-n-get-be.onrender.com');
-  console.log('Pinged the server every 14 minutes');
-});
+// cron.schedule('*/14 * * * *', () => {
+//   keepAlive('https://pick-n-get-be.onrender.com');
+//   console.log('Pinged the server every 14 minutes');
+// });

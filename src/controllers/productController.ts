@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
-import { Product, Producer, Order, ProductStatus } from '../models/productModel';
-import { User, UserRole } from '../models/userModel';
+import { Product, Producer, Order, ProductStatus } from '../models/productModel.js';
+import { User, UserRole } from '../models/userModel.js';
 
 // HBAR to USD conversion rate (update this periodically or use an API)
 const HBAR_TO_USD = 0.05; // Example: 1 HBAR = $0.05 (update with real rate)

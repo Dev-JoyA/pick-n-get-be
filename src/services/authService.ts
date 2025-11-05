@@ -1,6 +1,6 @@
-import { User, UserRole } from '../models/userModel';
-import { Rider } from '../interface/deliveryInterface';
-import { Producer } from '../models/productModel';
+import { User, UserRole } from '../models/userModel.js';
+import { Rider } from '../interface/deliveryInterface.js';
+import { Producer } from '../models/productModel.js';
 
 /**
  * Check wallet roles across contract and backend

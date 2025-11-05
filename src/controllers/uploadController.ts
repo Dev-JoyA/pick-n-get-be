@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { uploadToHederaFS, validateFile, getFileFromHederaFS } from '../services/hederaFileService';
+import { uploadToHederaFS, validateFile, getFileFromHederaFS } from '../services/hederaFileService.js';
 
 /**
  * Upload a single document to Hedera File Service

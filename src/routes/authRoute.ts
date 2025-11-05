@@ -9,6 +9,8 @@ import {
 
 const router = express.Router();
 
+router.post('/riders/verify-phone', verifyRiderPhone);
+router.post('/users/verify-phone', verifyUserPhone);
 router.post('/save-user', saveUserFromContract);
 router.post('/check-wallet', checkWalletAuth);
 router.post('/sync-vendor-status', syncVendorStatus);

@@ -129,87 +129,8 @@ export const uploadMultipleDocuments = async (req: Request, res: Response) => {
   }
 };
 
-// /**
-//  * ✅ NEW: Retrieve and serve file from Hedera File Service
-//  * GET /api/v1/upload/file/:fileId
-//  */
-// export const getFile = async (req: Request, res: Response) => {
-//   try {
-//     const { fileId } = req.params;
-
-//     if (!fileId) {
-//       return res.status(400).json({
-//         status: 'error',
-//         message: 'File ID is required',
-//       });
-//     }
-
-//     console.log(`📥 Retrieving file: ${fileId}`);
-
-//     // Retrieve file from Hedera
-//     const result = await getFileFromHederaFS(fileId);
-
-//     if (!result.success || !result.content) {
-//       return res.status(404).json({
-//         status: 'error',
-//         message: 'File not found or failed to retrieve',
-//         error: result.error,
-//       });
-//     }
-
-//     // Determine content type based on file extension or content
-//     let contentType = 'application/octet-stream';
-
-//     // Try to detect content type from buffer
-//     const buffer = result.content;
-
-//     // Check magic numbers for common image types
-//     if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
-//       contentType = 'image/jpeg';
-//     } else if (
-//       buffer[0] === 0x89 &&
-//       buffer[1] === 0x50 &&
-//       buffer[2] === 0x4e &&
-//       buffer[3] === 0x47
-//     ) {
-//       contentType = 'image/png';
-//     } else if (buffer[0] === 0x47 && buffer[1] === 0x49 && buffer[2] === 0x46) {
-//       contentType = 'image/gif';
-//     } else if (
-//       buffer[0] === 0x52 &&
-//       buffer[1] === 0x49 &&
-//       buffer[2] === 0x46 &&
-//       buffer[3] === 0x46
-//     ) {
-//       contentType = 'image/webp';
-//     } else if (
-//       buffer[0] === 0x25 &&
-//       buffer[1] === 0x50 &&
-//       buffer[2] === 0x44 &&
-//       buffer[3] === 0x46
-//     ) {
-//       contentType = 'application/pdf';
-//     }
-
-//     // Set cache headers for better performance
-//     res.setHeader('Content-Type', contentType);
-//     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
-//     res.setHeader('Content-Length', buffer.length);
-
-//     console.log(`✅ Serving file: ${fileId} (${contentType}, ${buffer.length} bytes)`);
-
-//     return res.send(buffer);
-//   } catch (error: any) {
-//     console.error('File retrieval error:', error);
-//     return res.status(500).json({
-//       status: 'error',
-//       message: error.message || 'Failed to retrieve file',
-//     });
-//   }
-// };
-
 /**
- * ✅ FIXED: Retrieve and serve file from Hedera File Service
+ * ✅ NEW: Retrieve and serve file from Hedera File Service
  * GET /api/v1/upload/file/:fileId
  */
 export const getFile = async (req: Request, res: Response) => {
@@ -229,7 +150,6 @@ export const getFile = async (req: Request, res: Response) => {
     const result = await getFileFromHederaFS(fileId);
 
     if (!result.success || !result.content) {
-      console.error(`❌ File retrieval failed: ${result.error}`);
       return res.status(404).json({
         status: 'error',
         message: 'File not found or failed to retrieve',
@@ -237,14 +157,13 @@ export const getFile = async (req: Request, res: Response) => {
       });
     }
 
-    const buffer = result.content;
-
-    console.log(`✅ File retrieved: ${buffer.length} bytes`);
-    console.log(`📊 First bytes: ${buffer.slice(0, 10).toString('hex')}`);
-
-    // Determine content type based on magic numbers
+    // Determine content type based on file extension or content
     let contentType = 'application/octet-stream';
 
+    // Try to detect content type from buffer
+    const buffer = result.content;
+
+    // Check magic numbers for common image types
     if (buffer[0] === 0xff && buffer[1] === 0xd8 && buffer[2] === 0xff) {
       contentType = 'image/jpeg';
     } else if (
@@ -272,18 +191,16 @@ export const getFile = async (req: Request, res: Response) => {
       contentType = 'application/pdf';
     }
 
-    console.log(`📷 Content-Type: ${contentType}`);
-
-    // Set proper headers
+    // Set cache headers for better performance
     res.setHeader('Content-Type', contentType);
-    res.setHeader('Content-Length', buffer.length);
     res.setHeader('Cache-Control', 'public, max-age=31536000'); // Cache for 1 year
-    res.setHeader('Access-Control-Allow-Origin', '*'); // ✅ Important for CORS
+    res.setHeader('Content-Length', buffer.length);
 
-    // Send the buffer directly
+    console.log(`✅ Serving file: ${fileId} (${contentType}, ${buffer.length} bytes)`);
+
     return res.send(buffer);
   } catch (error: any) {
-    console.error('❌ File retrieval error:', error);
+    console.error('File retrieval error:', error);
     return res.status(500).json({
       status: 'error',
       message: error.message || 'Failed to retrieve file',

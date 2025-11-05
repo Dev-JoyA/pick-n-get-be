@@ -9,9 +9,9 @@ info:
 
 servers:
   - url: https://pick-n-get-be.onrender.com
-    description: Production server
+    description: Production server (Live) - Use this to test against live API
   - url: http://localhost:5000
-    description: Development server
+    description: Local development server - Use this when running locally
 
 tags:
   - name: Riders

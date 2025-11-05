@@ -14,7 +14,7 @@ import uploadRoutes from './src/routes/uploadRoute.js';
 import adminRoutes from './src/routes/adminRoutes.js';
 import productRoutes from './src/routes/productRoute.js';
 
-import cron from 'node-cron';
+// import cron from 'node-cron';
 import https from 'https';
 import swaggerUi from 'swagger-ui-express';
 import YAML from 'yamljs';
@@ -31,37 +31,61 @@ const PORT = process.env.PORT || 5000;
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Middleware setup - CORS FIRST
+// ✅ FIXED CORS CONFIGURATION FOR SWAGGER
 app.use(
   cors({
     origin: function (origin, callback) {
+      // Allow requests with no origin (Postman, Swagger UI, mobile apps, curl)
       if (!origin) return callback(null, true);
 
       const allowedOrigins = [
         'http://localhost:3000',
         'http://localhost:3001',
+        'http://localhost:5000',
         'https://pick-n-get-fe.vercel.app',
+        'https://pick-n-get-be.onrender.com',
       ];
 
-      // if (origin.match(/^https:\/\/pick-n-get-fe.*\.vercel\.app$/)) {
-      //   return callback(null, true);
-      // }
+      // Allow all Vercel preview deployments
+      if (origin.match(/^https:\/\/pick-n-get-fe.*\.vercel\.app$/)) {
+        return callback(null, true);
+      }
+
+      // Allow Swagger UI and localhost variations
+      if (
+        origin.includes('swagger') ||
+        origin.includes('localhost') ||
+        origin.includes('127.0.0.1')
+      ) {
+        return callback(null, true);
+      }
 
       if (allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
-        console.error('CORS blocked origin:', origin); //Debug logging
-        callback(new Error('Not allowed by CORS'));
+        console.log('⚠️  Request from origin:', origin);
+        // Allow for testing - change to callback(new Error('Not allowed by CORS')) for strict production
+        callback(null, true);
       }
     },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+      'Origin',
+      'Access-Control-Request-Method',
+      'Access-Control-Request-Headers',
+    ],
     exposedHeaders: ['Content-Type', 'Content-Length', 'Cache-Control'],
+    preflightContinue: false,
+    optionsSuccessStatus: 204,
   }),
 );
 
-// THEN helmet
+// THEN helmet (after CORS)
 app.use(
   helmet({
     crossOriginResourcePolicy: { policy: 'cross-origin' },
@@ -73,25 +97,48 @@ app.use(
 app.use(morgan('dev'));
 app.use(express.json());
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(morgan('dev'));
-app.use(express.json());
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
-// Swagger setup BEFORE other routes
+// ✅ UPDATED SWAGGER SETUP WITH MULTIPLE SERVER OPTIONS
 try {
   const swaggerPath = path.join(__dirname, 'src', 'swagger', 'swagger.yaml');
   console.log('Looking for swagger file at:', swaggerPath);
 
   const swaggerDocument = YAML.load(swaggerPath);
 
+  // ✅ ADD DYNAMIC SERVER SELECTION
+  swaggerDocument.servers = [
+    {
+      url: 'https://pick-n-get-be.onrender.com',
+      description: 'Production server (Live)',
+    },
+    {
+      url: 'http://localhost:5000',
+      description: 'Local development server',
+    },
+  ];
+
   const swaggerOptions = {
-    customCss: '.swagger-ui .topbar { display: none }',
+    customCss: `
+      .swagger-ui .topbar { display: none }
+      .swagger-ui .scheme-container { 
+        background: #fafafa; 
+        padding: 20px;
+        margin: 20px 0;
+      }
+    `,
     customSiteTitle: 'Pick N Get API Documentation',
+    swaggerOptions: {
+      persistAuthorization: true,
+      displayRequestDuration: true,
+      filter: true,
+      tryItOutEnabled: true,
+    },
   };
 
   app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument, swaggerOptions));
 
   console.log('✓ Swagger documentation loaded successfully');
+  console.log('✓ Swagger servers configured: Production + Local');
 } catch (error) {
   console.error('✗ Error setting up Swagger:', error);
 }
@@ -100,13 +147,19 @@ try {
 app.get('/', (req: Request, res: Response) => {
   res.status(200).json({
     message: 'Welcome to Pick N Get API',
-    documentation: `http://localhost:${PORT}/api-docs`,
+    documentation: `${req.protocol}://${req.get('host')}/api-docs`,
+    status: 'online',
+    timestamp: new Date().toISOString(),
   });
 });
 
 // Health check
 app.get('/health', (req: Request, res: Response) => {
-  res.status(200).json({ status: 'ok' });
+  res.status(200).json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime(),
+  });
 });
 
 // API routes
@@ -114,35 +167,42 @@ app.use('/api/v1', route);
 app.use('/api/v1/pickups', pickupRoutes);
 app.use('/api/v1/location', locationRoutes);
 app.use('/api/v1/agents', agentRoutes);
-app.use('/api/v1/upload', uploadRoutes); // Upload routes for Hedera File Service
+app.use('/api/v1/upload', uploadRoutes);
 app.use('/api/v1/delivery', deliveryRoutes);
-app.use('/api/v1/auth', authRoutes); //auth routes
+app.use('/api/v1/auth', authRoutes);
 app.use('/api/v1/admin', adminRoutes);
 app.use('/api/v1/products', productRoutes);
 
 // 404 handler
 app.use((req: Request, res: Response) => {
-  res.status(404).json({ error: 'Route not found' });
+  res.status(404).json({
+    error: 'Route not found',
+    path: req.path,
+    method: req.method,
+  });
 });
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log(`API Documentation: http://localhost:${PORT}/api-docs`);
+  console.log(`🚀 Server running on port ${PORT}`);
+  console.log(`📚 API Documentation: http://localhost:${PORT}/api-docs`);
+  console.log(`🌍 Production Docs: https://pick-n-get-be.onrender.com/api-docs`);
 });
 
 startServer().catch((err) => console.log(err));
 
+// Optional: Keep-alive function for Render
 function keepAlive(url: string) {
   https
     .get(url, (res) => {
-      console.log(`Status: ${res.statusCode}`);
+      console.log(`Keep-alive ping: Status ${res.statusCode}`);
     })
     .on('error', (error) => {
-      console.error(`Error: ${error.message}`);
+      console.error(`Keep-alive error: ${error.message}`);
     });
 }
 
+// Uncomment to enable keep-alive
 // cron.schedule('*/14 * * * *', () => {
 //   keepAlive('https://pick-n-get-be.onrender.com');
 //   console.log('Pinged the server every 14 minutes');

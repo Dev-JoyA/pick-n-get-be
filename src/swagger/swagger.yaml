@@ -9,9 +9,9 @@ info:
 
 servers:
   - url: https://pick-n-get-be.onrender.com
-    description: Production server
+    description: Production server (Live) - Use this to test against live API
   - url: http://localhost:5000
-    description: Development server
+    description: Local development server - Use this when running locally
 
 tags:
   - name: Riders
@@ -30,6 +30,8 @@ tags:
     description: Product marketplace management
   - name: Producers
     description: Producer/Vendor management
+  - name: Authentication
+    description: User and rider authentication endpoints
 
 components:
   schemas:
@@ -1875,10 +1877,13 @@ paths:
                     properties:
                       trackingId:
                         type: string
-                        example: "REC123456"
                       newStatus:
                         type: string
                         example: "Cancelled"
+        "400":
+          description: Cannot cancel pickup
+        "404":
+          description: Pickup not found
 
   /api/v1/location/update:
     post:
@@ -2028,29 +2033,29 @@ paths:
           description: Internal server error
 
   /api/v1/admin/stats/users:
-  get:
-    tags:
-      - Admin
-    summary: Get detailed user statistics
-    description: Retrieve detailed user statistics broken down by status and role
-    responses:
-      "200":
-        description: User statistics retrieved successfully
-        content:
-          application/json:
-            schema:
-              type: object
-              properties:
-                status:
-                  type: string
-                  example: "success"
-                message:
-                  type: string
-                  example: "User statistics fetched successfully"
-                data:
-                  $ref: "#/components/schemas/UserStats"
-      "500":
-        description: Internal server error
+    get:
+      tags:
+        - Admin
+      summary: Get detailed user statistics
+      description: Retrieve detailed user statistics broken down by status and role
+      responses:
+        "200":
+          description: User statistics retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "User statistics fetched successfully"
+                  data:
+                    $ref: "#/components/schemas/UserStats"
+        "500":
+          description: Internal server error
 
   /api/v1/admin/stats/riders:
     get:
@@ -2838,6 +2843,7 @@ paths:
                         type: number
                       rate:
                         type: number
+
   /api/v1/products/{productId}/status:
     patch:
       tags:
@@ -2927,3 +2933,227 @@ paths:
                         type: number
                       remainingQuantity:
                         type: number
+
+  /api/v1/products/fix-image-urls:
+    post:
+      tags:
+        - Products
+      summary: Fix image URLs for all products (Admin)
+      description: Run once to update existing product image URLs to new format
+      responses:
+        "200":
+          description: Image URLs updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  message:
+                    type: string
+                    example: "Updated 50 product image URLs"
+                  data:
+                    type: object
+                    properties:
+                      totalProducts:
+                        type: number
+                      updated:
+                        type: number
+                      newUrlFormat:
+                        type: string
+        "500":
+          description: Failed to fix image URLs
+
+  /api/v1/users/profile:
+    put:
+      tags:
+        - Authentication
+      summary: Update user profile
+      description: Update user profile information
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - userId
+              properties:
+                userId:
+                  type: number
+                  example: 1
+                name:
+                  type: string
+                  example: "John Doe"
+                email:
+                  type: string
+                  example: "john@example.com"
+                address:
+                  type: string
+                  example: "123 Main St"
+                country:
+                  type: string
+                  example: "Nigeria"
+                profileImage:
+                  type: string
+                  example: "0.0.7179369"
+                  description: Hedera File ID
+      responses:
+        "200":
+          description: Profile updated successfully
+        "404":
+          description: User not found
+
+  /api/v1/auth/sync-vendor-status:
+    post:
+      tags:
+        - Authentication
+      summary: Sync vendor status from smart contract
+      description: Check if wallet is registered in Product contract and update backend
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - walletAddress
+              properties:
+                walletAddress:
+                  type: string
+                  example: "0x1234567890abcdef..."
+      responses:
+        "200":
+          description: Vendor status synced successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                  message:
+                    type: string
+                  data:
+                    type: object
+                    properties:
+                      walletAddress:
+                        type: string
+                      roles:
+                        type: array
+                        items:
+                          type: string
+                      primaryRole:
+                        type: string
+                      vendorData:
+                        type: object
+                      syncedFromContract:
+                        type: boolean
+        "404":
+          description: Vendor not found in contract or backend
+      content:
+        application/json:
+          schema:
+            type: object
+            required:
+              - walletAddress
+              - riderId
+            properties:
+              walletAddress:
+                type: string
+                example: "0x1234567890abcdef..."
+              riderId:
+                type: number
+                example: 123
+              name:
+                type: string
+                example: "John Doe"
+              phoneNumber:
+                type: string
+                example: "1234567890"
+              vehicleType:
+                type: string
+                example: "Car"
+              vehicleNumber:
+                type: string
+                example: "ABC-123"
+    responses:
+      "201":
+        description: Rider saved successfully
+      "400":
+        description: Invalid data
+      "409":
+        description: Rider already exists
+
+  /api/v1/admin/auth/save-rider:
+    post:
+      tags:
+        - Admin
+      summary: Save rider from blockchain
+      description: Save rider data after blockchain registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - walletAddress
+                - riderId
+              properties:
+                walletAddress:
+                  type: string
+                  example: "0x1234567890abcdef..."
+                riderId:
+                  type: number
+                  example: 123
+                name:
+                  type: string
+                  example: "John Doe"
+                phoneNumber:
+                  type: string
+                  example: "1234567890"
+                vehicleType:
+                  type: string
+                  example: "Car"
+                vehicleNumber:
+                  type: string
+                  example: "ABC-123"
+      responses:
+        "201":
+          description: Rider saved successfully
+        "400":
+          description: Invalid data
+        "409":
+          description: Rider already exists
+
+  /api/v1/users/{userId}:
+    get:
+      tags:
+        - Authentication
+      summary: Get user by ID
+      description: Retrieve user information by user ID
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          schema:
+            type: number
+          example: 1
+      responses:
+        "200":
+          description: User retrieved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "success"
+                  data:
+                    type: object
+        "404":
+          description: User not found

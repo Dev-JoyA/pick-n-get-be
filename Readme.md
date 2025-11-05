@@ -35,7 +35,7 @@ npm run dev
 
 Create `.env` with the following:
 
-```bash
+````bash
 # Server
 PORT=5000
 NODE_ENV=development
@@ -48,10 +48,15 @@ HEDERA_OPERATOR_ID=0.0.YOUR_ACCOUNT_ID
 HEDERA_OPERATOR_KEY=YOUR_PRIVATE_KEY_HERE
 HEDERA_NETWORK=testnet
 
-# Super Admin
+# Super Admin Wallet address (for account details above)
 SUPER_ADMIN_WALLET=0x0000000000000000000000000000000000000000
 
+# Note
+``` You need to input your wallet address here and also register same wallet as admin on Hashcsan to be able to aceess admin fuctionalities completely
+````
+
 # Firebase
+
 DATABASE_URL=https://your-project.firebaseio.com/
 APIKEY=your_firebase_api_key
 AUTHDOMAIN=your-project.firebaseapp.com
@@ -62,11 +67,14 @@ APPID=your_app_id
 FIREBASE_SERVICE_ACCOUNT_KEY=path/to/serviceAccountKey.json
 
 # Mapbox (Optional)
+
 MAPBOX_API_KEY=your_mapbox_api_key
 
 # Security
+
 PRIVATE_KEY=your_encryption_key
 PUBLIC_KEY=your_encryption_key
+
 ```
 
 ---
@@ -74,54 +82,56 @@ PUBLIC_KEY=your_encryption_key
 ## 📂 Project Structure
 
 ```
+
 src/
-├── controllers/            # Request handlers
-│   ├── authController.ts   # Wallet verification
-│   ├── pickupController.ts # Pickup coordination
-│   ├── agentController.ts  # Rider operations
-│   ├── productController.ts # Marketplace logic
-│   ├── deliveryController.ts # Delivery management
-│   └── adminController.ts  # Admin functions
+├── controllers/ # Request handlers
+│ ├── authController.ts # Wallet verification
+│ ├── pickupController.ts # Pickup coordination
+│ ├── agentController.ts # Rider operations
+│ ├── productController.ts # Marketplace logic
+│ ├── deliveryController.ts # Delivery management
+│ └── adminController.ts # Admin functions
 │
-├── services/               # Business logic
-│   ├── authService.ts      # Role management
-│   ├── deliveryService.ts  # Rider matching
-│   ├── pickupService.ts    # Pickup creation
-│   ├── hederaFileService.ts # File uploads
-│   ├── riderFinderService.ts # Rider routing
-│   └── notificationService.ts # Push notifications
+├── services/ # Business logic
+│ ├── authService.ts # Role management
+│ ├── deliveryService.ts # Rider matching
+│ ├── pickupService.ts # Pickup creation
+│ ├── hederaFileService.ts # File uploads
+│ ├── riderFinderService.ts # Rider routing
+│ └── notificationService.ts # Push notifications
 │
-├── models/                 # MongoDB schemas
-│   ├── userModel.ts        # User/Recycler
-│   ├── riderModel.ts       # Riders/Agents
-│   ├── pickupModel.ts      # Pickups
-│   └── productModel.ts     # Products/Vendors
+├── models/ # MongoDB schemas
+│ ├── userModel.ts # User/Recycler
+│ ├── riderModel.ts # Riders/Agents
+│ ├── pickupModel.ts # Pickups
+│ └── productModel.ts # Products/Vendors
 │
-├── routes/                 # API routes
-│   ├── authRoute.ts        # Authentication
-│   ├── pickupRoute.ts      # Pickup operations
-│   ├── agentRoute.ts       # Agent/Rider routes
-│   ├── productRoute.ts     # Marketplace
-│   ├── deliveryRoute.ts    # Delivery management
-│   └── adminRoutes.ts      # Admin operations
+├── routes/ # API routes
+│ ├── authRoute.ts # Authentication
+│ ├── pickupRoute.ts # Pickup operations
+│ ├── agentRoute.ts # Agent/Rider routes
+│ ├── productRoute.ts # Marketplace
+│ ├── deliveryRoute.ts # Delivery management
+│ └── adminRoutes.ts # Admin operations
 │
-├── middleware/             # Express middleware
-│   ├── auth.ts            # Authentication
-│   ├── validation.ts      # Input validation
-│   └── errorHandler.ts    # Error handling
+├── middleware/ # Express middleware
+│ ├── auth.ts # Authentication
+│ ├── validation.ts # Input validation
+│ └── errorHandler.ts # Error handling
 │
-├── config/                 # Configuration
-│   ├── db.ts              # MongoDB connection
-│   ├── firebase.ts        # Firebase setup
-│   └── messaging.ts       # FCM setup
+├── config/ # Configuration
+│ ├── db.ts # MongoDB connection
+│ ├── firebase.ts # Firebase setup
+│ └── messaging.ts # FCM setup
 │
-├── utils/                  # Helper functions
-│   ├── riderValidation.ts
-│   └── vehicleCalculator.ts
+├── utils/ # Helper functions
+│ ├── riderValidation.ts
+│ └── vehicleCalculator.ts
 │
-└── swagger/                # API documentation
-    ├── config.ts
-    └── swagger.yaml
+└── swagger/ # API documentation
+├── config.ts
+└── swagger.yaml
+
 ```
 
 ---
@@ -131,67 +141,79 @@ src/
 ### Authentication
 
 ```
-POST   /api/v1/auth/check-wallet
-POST   /api/v1/auth/save-user
-POST   /api/v1/users/verify-phone
-PUT    /api/v1/users/profile
-GET    /api/v1/users/:userId
+
+POST /api/v1/auth/check-wallet
+POST /api/v1/auth/save-user
+POST /api/v1/users/verify-phone
+PUT /api/v1/users/profile
+GET /api/v1/users/:userId
+
 ```
 
 ### Riders
 
 ```
-POST   /api/v1/riders
-GET    /api/v1/riders
-GET    /api/v1/riders/:riderId
-GET    /api/v1/riders/check/:identifier
-PATCH  /api/v1/riders/:riderId/approval
-GET    /api/v1/admin/riders/pending
+
+POST /api/v1/riders
+GET /api/v1/riders
+GET /api/v1/riders/:riderId
+GET /api/v1/riders/check/:identifier
+PATCH /api/v1/riders/:riderId/approval
+GET /api/v1/admin/riders/pending
+
 ```
 
 ### Pickups
 
 ```
-POST   /api/v1/pickups/create
-POST   /api/v1/pickups/find-riders
-GET    /api/v1/pickups/track/:pickupId
-GET    /api/v1/pickups/user/:userId/active
-GET    /api/v1/pickups/user/:userId/history
+
+POST /api/v1/pickups/create
+POST /api/v1/pickups/find-riders
+GET /api/v1/pickups/track/:pickupId
+GET /api/v1/pickups/user/:userId/active
+GET /api/v1/pickups/user/:userId/history
+
 ```
 
 ### Agents
 
 ```
-GET    /api/v1/agents/:riderId/stats
-GET    /api/v1/agents/:riderId/pickups/active
-GET    /api/v1/agents/:riderId/pickups/available
-POST   /api/v1/agents/:riderId/pickups/:pickupId/accept
-PATCH  /api/v1/agents/:riderId/pickups/:pickupId/status
+
+GET /api/v1/agents/:riderId/stats
+GET /api/v1/agents/:riderId/pickups/active
+GET /api/v1/agents/:riderId/pickups/available
+POST /api/v1/agents/:riderId/pickups/:pickupId/accept
+PATCH /api/v1/agents/:riderId/pickups/:pickupId/status
+
 ```
 
 ### Products
 
 ```
-POST   /api/v1/products
-POST   /api/v1/products/producers
-GET    /api/v1/products
-GET    /api/v1/products/:productId
-PATCH  /api/v1/products/:productId/status
-POST   /api/v1/products/:productId/sale
-GET    /api/v1/products/vendors/:walletAddress/stats
-GET    /api/v1/products/vendors/:walletAddress/products
-GET    /api/v1/products/vendors/:walletAddress/orders
-GET    /api/v1/products/conversion/hbar-to-usd
-POST   /api/v1/products/conversion/usd-to-hbar
+
+POST /api/v1/products
+POST /api/v1/products/producers
+GET /api/v1/products
+GET /api/v1/products/:productId
+PATCH /api/v1/products/:productId/status
+POST /api/v1/products/:productId/sale
+GET /api/v1/products/vendors/:walletAddress/stats
+GET /api/v1/products/vendors/:walletAddress/products
+GET /api/v1/products/vendors/:walletAddress/orders
+GET /api/v1/products/conversion/hbar-to-usd
+POST /api/v1/products/conversion/usd-to-hbar
+
 ```
 
 ### Location
 
 ```
-POST   /api/v1/location/update
-GET    /api/v1/location/:riderId
+
+POST /api/v1/location/update
+GET /api/v1/location/:riderId
 DELETE /api/v1/location/:riderId
-```
+
+````
 
 ---
 
@@ -216,7 +238,7 @@ DELETE /api/v1/location/:riderId
   co2Saved: Number,
   createdAt: Date
 }
-```
+````
 
 ### Riders Collection
 
